@@ -14,7 +14,7 @@ app = Flask(__name__)
 # ТОХИРГОО БОЛОН API ТҮЛХҮҮРҮҮД
 # ---------------------------------------------------------
 CHIMEGE_TOKEN = (
-    "8daf6c65eb98bf17d6c92e9bcb933f2f12e347909a8bc4a3ff751177295cdf2a"
+    "f848d41c0e62701cc330286bc8397456a35151c2ec6d821daf7d6f363a098046"
 )
 GEMINI_API_KEY = (
     "AQ.Ab8RN6J_YnmZEIiDUD2pjxKAazXSuS-j9QvOymUQigxIvBIDRA"  # <-- Энд өөрийн Gemini API түлхүүрээ оруулна
