@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Сургуулийн Ухаалаг АИ Самбар</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background: linear-gradient(135deg, #07131e, #0c1b2b, #11263a);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        #bgCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        header {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            max-width: 900px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-title-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .school-logo {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 8px rgba(0, 210, 255, 0.5));
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .admin-btn {
+            position: absolute;
+            right: 0;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .admin-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 800px;
+            flex: 1;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* ORB & ARROW STYLES */
+        .orb-container {
+            width: 260px;
+            height: 260px;
+            margin: 15px auto;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
+            z-index: 20;
+        }
+
+        .orb {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle, #00d2ff 0%, #3a7bd5 100%);
+            box-shadow: 0 0 35px rgba(0, 210, 255, 0.5);
+            transition: all 0.5s ease;
+            animation: idleAnimation 3.5s infinite ease-in-out;
+            pointer-events: none;
+        }
+
+        /* ХӨДӨЛГӨӨНТ СУМНЫ ЭЛЕМЕНТ */
+        .arrow-overlay {
+            position: absolute;
+            font-size: 6.5rem;
+            color: #ffffff;
+            text-shadow: 0 0 20px #00f2fe, 0 0 40px #00d2ff, 0 0 60px #3a7bd5;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.4s ease;
+            pointer-events: none;
+            z-index: 25;
+        }
+
+        @keyframes idleAnimation {
+            0% { transform: translateY(0px) scale(1); box-shadow: 0 0 30px rgba(0, 210, 255, 0.4); }
+            50% { transform: translateY(-12px) scale(1.04); box-shadow: 0 0 60px rgba(0, 210, 255, 0.8); }
+            100% { transform: translateY(0px) scale(1); box-shadow: 0 0 30px rgba(0, 210, 255, 0.4); }
+        }
+
+        .orb-container.recording .orb {
+            background: radial-gradient(circle, #ff416c 0%, #ff4b2b 100%);
+            box-shadow: 0 0 60px rgba(255, 65, 108, 0.8);
+            animation: recordPulse 1.2s infinite alternate ease-in-out;
+        }
+
+        @keyframes recordPulse {
+            0% { transform: scale(0.95); }
+            100% { transform: scale(1.08); }
+        }
+
+        .orb-container.speaking .orb {
+            background: radial-gradient(circle, #00f2fe 0%, #4facfe 100%);
+            animation: speakVisual 0.7s infinite alternate ease-in-out;
+        }
+
+        @keyframes speakVisual {
+            0% { transform: scale(1); box-shadow: 0 0 30px #00f2fe, 0 0 60px #4facfe; filter: hue-rotate(0deg); }
+            100% { transform: scale(1.18); box-shadow: 0 0 80px #00f2fe, 0 0 130px #00c6ff; filter: hue-rotate(40deg); }
+        }
+
+        /* СУМ ИДЭВХЖИХ ҮЕИЙН АНИМАЦИУД */
+        .orb-container.show-arrow .orb {
+            opacity: 0.25;
+            transform: scale(0.85);
+        }
+
+        .orb-container.show-arrow .arrow-overlay {
+            opacity: 1;
+        }
+
+        /* ЗҮҮН ТИЙШ СУМ */
+        .orb-container.dir-left .arrow-overlay {
+            animation: arrowAnimLeft 0.8s infinite alternate ease-in-out;
+        }
+        @keyframes arrowAnimLeft {
+            0% { transform: translateX(15px) scale(1); }
+            100% { transform: translateX(-25px) scale(1.25); }
+        }
+
+        /* БАРУУН ТИЙШ СУМ */
+        .orb-container.dir-right .arrow-overlay {
+            animation: arrowAnimRight 0.8s infinite alternate ease-in-out;
+        }
+        @keyframes arrowAnimRight {
+            0% { transform: translateX(-15px) scale(1); }
+            100% { transform: translateX(25px) scale(1.25); }
+        }
+
+        /* ДЭЭШЭЭ СУМ (ДАВХАР ГАРАХ) */
+        .orb-container.dir-up .arrow-overlay {
+            animation: arrowAnimUp 0.8s infinite alternate ease-in-out;
+        }
+        @keyframes arrowAnimUp {
+            0% { transform: translateY(15px) scale(1); }
+            100% { transform: translateY(-25px) scale(1.25); }
+        }
+
+        /* ЗҮҮН ДЭЭШЭЭ СУМ */
+        .orb-container.dir-up-left .arrow-overlay {
+            animation: arrowAnimUpLeft 0.8s infinite alternate ease-in-out;
+        }
+        @keyframes arrowAnimUpLeft {
+            0% { transform: translate(12px, 12px) scale(1); }
+            100% { transform: translate(-20px, -20px) scale(1.25); }
+        }
+
+        /* БАРУУН ДЭЭШЭЭ СУМ */
+        .orb-container.dir-up-right .arrow-overlay {
+            animation: arrowAnimUpRight 0.8s infinite alternate ease-in-out;
+        }
+        @keyframes arrowAnimUpRight {
+            0% { transform: translate(-12px, 12px) scale(1); }
+            100% { transform: translate(20px, -20px) scale(1.25); }
+        }
+
+        .status-text {
+            font-size: 1.2rem;
+            margin-top: 15px;
+            text-align: center;
+            color: #e0e0e0;
+            min-height: 35px;
+        }
+
+        .key-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .chat-box {
+            margin-top: 15px;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: none;
+        }
+
+        .question {
+            font-size: 1.1rem;
+            color: #4facfe;
+            margin-bottom: 10px;
+        }
+
+        .answer {
+            font-size: 1.15rem;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+
+        /* FOOTER & TICKER STYLES */
+        footer {
+            width: 100%;
+            max-width: 900px;
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 16px;
+            padding: 14px 22px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
+            z-index: 10;
+            margin-top: 15px;
+        }
+
+        .footer-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .time-date-box {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .time-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 1px;
+        }
+
+        .date-text {
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+        .weather-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .weather-icon {
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: floatIcon 2.5s infinite ease-in-out;
+        }
+
+        @keyframes floatIcon {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-5px) scale(1.08); }
+        }
+
+        .weather-info {
+            display: flex;
+            flex-direction: column;
+            text-align: right;
+        }
+
+        .city-temp {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #38bdf8;
+        }
+
+        .weather-desc {
+            font-size: 0.85rem;
+            color: #cbd5e1;
+        }
+
+        .reminder-box {
+            background: rgba(56, 189, 248, 0.12);
+            border-left: 4px solid #38bdf8;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .news-badge {
+            background: #38bdf8;
+            color: #0f172a;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            flex-shrink: 0;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+        }
+
+        .ticker-wrapper {
+            flex: 1;
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .ticker-text {
+            display: inline-block;
+            white-space: nowrap;
+            padding-left: 100%;
+            animation: marquee 55s linear infinite;
+        }
+
+        .ticker-text:hover {
+            animation-play-state: paused;
+            cursor: pointer;
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 600px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            background: #0f172a;
+            color: #fff;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 15px 0;
+            resize: vertical;
+        }
+
+        .btn-group {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary { background: #3b82f6; color: white; }
+        .btn-secondary { background: #64748b; color: white; }
+    </style>
+</head>
+<body>
+
+    <canvas id="bgCanvas"></canvas>
+
+    <header>
+        <div class="header-title-box">
+            <img src="/static/logo.png" alt="Сургуулийн Лого" class="school-logo">
+            <h1>Сургуулийн Ухаалаг Туслах</h1>
+        </div>
+        <button class="admin-btn" onclick="openAdmin()">⚙️ Тохиргоо</button>
+    </header>
+
+    <main>
+        <div class="orb-container" id="orbContainer">
+            <div class="orb"></div>
+            <!-- СУМНЫ ЭЛЕМЕНТ -->
+            <div class="arrow-overlay" id="arrowOverlay">➔</div>
+        </div>
+
+        <div class="status-text" id="statusText">
+            Дэлгэц дээр эсвэл <span class="key-badge">SPACE</span> товчлуур дээр дарж яриарай
+        </div>
+
+        <div class="chat-box" id="chatBox">
+            <div class="question" id="userQuestion"></div>
+            <div class="answer" id="aiAnswer"></div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-top">
+            <div class="time-date-box">
+                <div class="time-text" id="timeDisplay">00:00:00</div>
+                <div class="date-text" id="dateDisplay">----.--.--</div>
+            </div>
+
+            <div class="weather-box">
+                <div class="weather-icon" id="weatherIcon">☀️</div>
+                <div class="weather-info">
+                    <div class="city-temp">Зүүнхараа: <span id="weatherTemp">--°C</span></div>
+                    <div class="weather-desc" id="weatherDesc">Уншиж байна...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="reminder-box">
+            <span class="news-badge">📢 БОЛОВСРОЛ & СУРГУУЛИЙН МЭДЭЭ</span>
+            <div class="ticker-wrapper">
+                <div class="ticker-text" id="newsTicker">Мэдээлэл уншиж байна...</div>
+            </div>
+        </div>
+    </footer>
+
+    <div class="modal" id="adminModal">
+        <div class="modal-content">
+            <h2>Сургуулийн Мэдээлэл Шинэчлэх</h2>
+            <textarea id="schoolContextInput" placeholder="Энд сургуулийн хичээлийн танхим, анги танхимын байршил, ерөнхий мэдээллийг оруулна уу..."></textarea>
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="closeAdmin()">Хаах</button>
+                <button class="btn btn-primary" onclick="saveData()">Хадгалах</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const orbContainer = document.getElementById('orbContainer');
+        const arrowOverlay = document.getElementById('arrowOverlay');
+        const statusText = document.getElementById('statusText');
+        const chatBox = document.getElementById('chatBox');
+        const userQuestion = document.getElementById('userQuestion');
+        const aiAnswer = document.getElementById('aiAnswer');
+        const adminModal = document.getElementById('adminModal');
+        const schoolContextInput = document.getElementById('schoolContextInput');
+
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+
+        // ---------------------------------------------------------
+        // ЦАГ, ОН САР ӨДӨР БА ЗҮҮНХАРАА ЦАГ АГААР
+        // ---------------------------------------------------------
+        function updateDateTime() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+
+            const daysMn = ['Ням', 'Даваа', 'Мягмар', 'Лхагва', 'Пүрэв', 'Баасан', 'Бямба'];
+            const dayName = daysMn[now.getDay()];
+
+            document.getElementById('timeDisplay').innerText = `${hours}:${minutes}:${seconds}`;
+            document.getElementById('dateDisplay').innerText = `${year}.${month}.${day} (${dayName})`;
+        }
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        let weatherTipText = "Гадаа нарлаг байна, усаа сайн уугаарай! 🥤";
+
+        async function fetchWeather() {
+            try {
+                const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=48.8108&longitude=106.4578&current_weather=true');
+                const data = await response.json();
+                const weather = data.current_weather;
+                const temp = Math.round(weather.temperature);
+                const code = weather.weathercode;
+
+                let icon = '☀️';
+                let desc = 'Цэлмэг';
+
+                if (code === 0) {
+                    icon = '☀️'; desc = 'Цэлмэг'; weatherTipText = 'Гадаа нарлаг байна, хичээлдээ амжилт хүсье! 🥤';
+                } else if ([1, 2, 3].includes(code)) {
+                    icon = '⛅'; desc = 'Үүлэрхэг'; weatherTipText = 'Гадаа үүлэрхэг байна, дулаан хувцаслаарай! 🧥';
+                } else if ([45, 48].includes(code)) {
+                    icon = '🌫️'; desc = 'Манантай'; weatherTipText = 'Манантай байна, замдаа анхааралтай яваарай! 🌫️';
+                } else if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) {
+                    icon = '🌧️'; desc = 'Бороотой'; weatherTipText = 'Бороо орно, шүхрээ мартуузай! ☂️';
+                } else if ([71, 73, 75, 77, 85, 86].includes(code)) {
+                    icon = '❄️'; desc = 'Цас орж байна'; weatherTipText = 'Гадаа цастай байна, дулаан хувцаслаарай! 🧣';
+                } else if ([95, 96, 99].includes(code)) {
+                    icon = '⛈️'; desc = 'Аянгатай бороо'; weatherTipText = 'Аянга цахилгаантай, аюулгүй байдлаа хангаарай! ⚡';
+                }
+
+                document.getElementById('weatherTemp').innerText = `${temp}°C`;
+                document.getElementById('weatherDesc').innerText = desc;
+                document.getElementById('weatherIcon').innerText = icon;
+                
+                updateNewsTicker();
+            } catch (err) {
+                document.getElementById('weatherTemp').innerText = '18°C';
+                document.getElementById('weatherDesc').innerText = 'Цэлмэг';
+                document.getElementById('weatherIcon').innerText = '☀️';
+                updateNewsTicker();
+            }
+        }
+
+        // БОЛОВСРОЛ БА СУРГУУЛИЙН МЭДЭЭЛЛИЙН БАГЦУУД (5 МИНУТ ТУТАМ СОЛИГДОНО)
+        const newsBatches = [
+            [
+                "🏫 СУРГУУЛИЙН ЗАР: Сурагчид хичээлийн цагаас хоцрохгүй, сургуулийн дүрмээ баримталцгаая!",
+                "🧠 БОЛОВСРОЛ: Помодоро техник (25 минут хичээллээд 5 минут амрах) нь анхаарал төвлөрлийг 40% нэмэгдүүлдэг.",
+                "🔬 ШИНЖЛЭХ УХААН: Эх дэлхийн хүчилтөрөгчийн 70 гаруй хувийг далай тэнгисийн замаг үйлдвэрлэдэг.",
+                "💡 АМЖИЛТЫН ЗӨВЛӨМЖ: Шинэ үг цээжлэхдээ орой унтахаас өмнө сэргээн санавал тархинд чанга хадгалагддаг."
+            ],
+            [
+                "📚 НОМЫН САН: Сургуулийн номын санд шинжлэх ухаан болон зөгнөлт уран зохиолын шинэ номууд ирлээ.",
+                "🏆 СУРГУУЛИЙН АМЖИЛТ: Манай сургуулийн баг тамирчид дүүргийн олимпиадад амжилттай оролцлоо!",
+                "🌌 САНСАР ОРЧИН: Нарны аймаг дотроос Сугар гараг хамгийн халуун нь бөгөөд гадаргуу нь 465°C хүрдэг.",
+                "📖 СУРАЛЦАХУЙ: Аливаа зүйлийг бусдад тайлбарлан зааж өгөх нь мэдлэгээ батжуулах хамгийн шилдэг арга юм."
+            ],
+            [
+                "💻 АИ ТУСЛАХ: AI туслахаас хичээлийн хуваарь болон математик, физик, гадаад хэлний асуултаа асуугаарай.",
+                "🎨 СУРГУУЛИЙН ИДЭВХИ: Энэ баасан гарагт сургуулийн авьяаслаг сурагчдын урлагийн үзүүлбэр болно.",
+                "🐝 БАЙГАЛЬ ЭХ: Зөгий 1 кг бал цуглуулахын тулд 4 сая гаруй цэцэгнд суудаг ажилсаг амьтан юм.",
+                "🌱 ЭРҮҮЛ МЭНД: Хичээлийн хооронд цэвэр агаар амьсгалж, нүдний дасгал хийх нь тархийг сэргээдэг."
+            ]
+        ];
+
+        let currentBatchIndex = 0;
+
+        function updateNewsTicker() {
+            const newsTicker = document.getElementById('newsTicker');
+            const currentNewsSet = newsBatches[currentBatchIndex % newsBatches.length];
+            
+            const allItems = [
+                `🌤️ Цаг агаар: ${weatherTipText}`,
+                ...currentNewsSet
+            ];
+
+            newsTicker.style.animation = 'none';
+            newsTicker.offsetHeight;
+            newsTicker.style.animation = 'marquee 55s linear infinite';
+            newsTicker.innerText = allItems.join("   •   ") + "   •_ ";
+
+            currentBatchIndex++;
+        }
+
+        fetchWeather();
+        setInterval(fetchWeather, 600000);
+        setInterval(updateNewsTicker, 5 * 60 * 1000);
+
+        // ---------------------------------------------------------
+        // CANVAS ANIMATION
+        // ---------------------------------------------------------
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let nastSegments = [];
+        let nastNodes = {};
+        let circuitPulses = [];
+        let goldParticles = [];
+        let bloodParticles = [];
+
+        function buildTumenNastGrid() {
+            nastSegments = [];
+            nastNodes = {};
+            const segmentSet = new Set();
+
+            const step = 20;
+            const tileSize = step * 4;
+            const cols = Math.ceil(canvas.width / tileSize) + 2;
+            const rows = Math.ceil(canvas.height / tileSize) + 2;
+
+            const relLines = [
+                [[0,0],[2,0]], [[2,0],[2,1]], [[2,1],[1,1]], [[1,1],[1,2]],
+                [[4,0],[4,2]], [[4,2],[3,2]], [[3,2],[3,1]], [[3,1],[2,1]],
+                [[4,4],[2,4]], [[2,4],[2,3]], [[2,3],[3,3]], [[3,3],[3,2]],
+                [[0,4],[0,2]], [[0,2],[1,2]], [[1,2],[1,3]], [[1,3],[2,3]]
+            ];
+
+            function addSegment(x1, y1, x2, y2) {
+                let key = `${x1},${y1}_${x2},${y2}`;
+                if (x1 > x2 || (x1 === x2 && y1 > y2)) {
+                    key = `${x2},${y2}_${x1},${y1}`;
+                }
+
+                if (!segmentSet.has(key)) {
+                    segmentSet.add(key);
+                    nastSegments.push({x1, y1, x2, y2});
+
+                    const k1 = `${x1},${y1}`;
+                    const k2 = `${x2},${y2}`;
+
+                    if (!nastNodes[k1]) nastNodes[k1] = [];
+                    if (!nastNodes[k2]) nastNodes[k2] = [];
+
+                    nastNodes[k1].push({x: x2, y: y2});
+                    nastNodes[k2].push({x: x1, y: y1});
+                }
+            }
+
+            for (let r = -1; r < rows; r++) {
+                for (let c = -1; c < cols; c++) {
+                    const ox = c * tileSize;
+                    const oy = r * tileSize;
+
+                    relLines.forEach(line => {
+                        addSegment(
+                            ox + line[0][0] * step,
+                            oy + line[0][1] * step,
+                            ox + line[1][0] * step,
+                            oy + line[1][1] * step
+                        );
+                    });
+                }
+            }
+
+            circuitPulses = Array.from({ length: 20 }, () => new CircuitPulse());
+        }
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            buildTumenNastGrid();
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        class CircuitPulse {
+            constructor() { this.reset(); }
+            reset() {
+                const nodeKeys = Object.keys(nastNodes);
+                if (nodeKeys.length === 0) return;
+                const startKey = nodeKeys[Math.floor(Math.random() * nodeKeys.length)];
+                const [sx, sy] = startKey.split(',').map(Number);
+                this.currX = sx; this.currY = sy;
+                const neighbors = nastNodes[startKey];
+                if (neighbors && neighbors.length > 0) {
+                    const next = neighbors[Math.floor(Math.random() * neighbors.length)];
+                    this.targetX = next.x; this.targetY = next.y;
+                } else {
+                    this.targetX = sx; this.targetY = sy;
+                }
+                this.progress = 0;
+                this.speed = 0.04 + Math.random() * 0.03;
+                this.history = [];
+                this.color = Math.random() > 0.3 ? '#00f2fe' : '#ffd700';
+            }
+            update(speedMult) {
+                this.progress += this.speed * speedMult;
+                const x = this.currX + (this.targetX - this.currX) * Math.min(1, this.progress);
+                const y = this.currY + (this.targetY - this.currY) * Math.min(1, this.progress);
+                this.history.push({x, y});
+                if (this.history.length > 16) this.history.shift();
+
+                if (this.progress >= 1) {
+                    const key = `${this.targetX},${this.targetY}`;
+                    const neighbors = nastNodes[key];
+                    if (neighbors && neighbors.length > 0) {
+                        const filtered = neighbors.filter(n => n.x !== this.currX || n.y !== this.currY);
+                        const choice = filtered.length > 0 ? filtered[Math.floor(Math.random() * filtered.length)] : neighbors[Math.floor(Math.random() * neighbors.length)];
+                        this.currX = this.targetX; this.currY = this.targetY;
+                        this.targetX = choice.x; this.targetY = choice.y;
+                        this.progress = 0;
+                    } else { this.reset(); }
+                }
+            }
+            draw(ctx) {
+                if (this.history.length < 2) return;
+                ctx.save();
+                ctx.shadowColor = this.color; ctx.shadowBlur = 10;
+                for (let i = 1; i < this.history.length; i++) {
+                    const alpha = i / this.history.length;
+                    ctx.strokeStyle = this.color;
+                    ctx.globalAlpha = alpha * 0.85;
+                    ctx.lineWidth = 1.2 + alpha * 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(this.history[i-1].x, this.history[i-1].y);
+                    ctx.lineTo(this.history[i].x, this.history[i].y);
+                    ctx.stroke();
+                }
+                const head = this.history[this.history.length - 1];
+                ctx.globalAlpha = 1; ctx.fillStyle = '#ffffff';
+                ctx.beginPath(); ctx.arc(head.x, head.y, 2.2, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        class GoldParticle {
+            constructor(x, y) {
+                this.x = x + (Math.random() - 0.5) * 8;
+                this.y = y + (Math.random() - 0.5) * 8;
+                this.size = Math.random() * 2.5 + 1;
+                this.vx = (Math.random() - 0.5) * 0.6;
+                this.vy = (Math.random() - 0.5) * 0.6 + 0.2;
+                this.alpha = 1;
+                this.decay = Math.random() * 0.02 + 0.012;
+                this.color = Math.random() > 0.3 ? '#ffe066' : '#ffd700';
+            }
+            update() { this.x += this.vx; this.y += this.vy; this.alpha -= this.decay; this.size *= 0.96; }
+            draw(ctx) {
+                if (this.alpha <= 0) return;
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 8; ctx.fillStyle = this.color;
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        class BloodParticle {
+            constructor(x, y) {
+                this.x = x + (Math.random() - 0.5) * 12;
+                this.y = y + (Math.random() - 0.5) * 12;
+                this.size = Math.random() * 4 + 2;
+                this.vx = (Math.random() - 0.5) * 8;
+                this.vy = (Math.random() - 0.5) * 8 - 1;
+                this.alpha = 1;
+                this.decay = Math.random() * 0.02 + 0.01;
+                this.color = Math.random() > 0.25 ? '#ff0033' : '#990000';
+            }
+            update() { this.x += this.vx; this.y += this.vy; this.vy += 0.18; this.alpha -= this.decay; this.size *= 0.96; }
+            draw(ctx) {
+                if (this.alpha <= 0) return;
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 10; ctx.fillStyle = this.color;
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        class Butterfly {
+            constructor(index) { this.index = index; this.isDead = false; this.reset(); }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = 22 + Math.random() * 4;
+                this.angle = Math.random() * Math.PI * 2;
+                this.targetAngle = this.angle;
+                this.baseSpeed = 1.4 + Math.random() * 0.4;
+                this.wingAngle = Math.random() * Math.PI * 2;
+                this.wingSpeed = 0.18;
+                this.palette = ['#00f2fe', '#4facfe', '#0052d4'];
+                this.isDead = false;
+            }
+            die() {
+                if (this.isDead) return;
+                this.isDead = true;
+                for (let i = 0; i < 45; i++) bloodParticles.push(new BloodParticle(this.x, this.y));
+                setTimeout(() => this.reset(), 10000);
+            }
+            update(speedMultiplier) {
+                if (this.isDead) return;
+                const orbRect = orbContainer.getBoundingClientRect();
+                const orbCenterX = orbRect.left + orbRect.width / 2;
+                const orbCenterY = orbRect.top + orbRect.height / 2;
+
+                if (Math.random() < 0.04) this.targetAngle += (Math.random() - 0.5) * 1.2;
+
+                const dx = orbCenterX - this.x;
+                const dy = orbCenterY - this.y;
+                const dist = Math.hypot(dx, dy);
+
+                if (dist > 380) {
+                    this.targetAngle = Math.atan2(dy, dx) + (Math.random() - 0.5) * 0.5;
+                } else if (dist < 110) {
+                    this.targetAngle = Math.atan2(-dy, -dx) + (Math.random() - 0.5) * 0.5;
+                }
+
+                let diff = this.targetAngle - this.angle;
+                while (diff < -Math.PI) diff += Math.PI * 2;
+                while (diff > Math.PI) diff -= Math.PI * 2;
+                this.angle += diff * 0.06;
+
+                const currentSpeed = this.baseSpeed * speedMultiplier;
+                this.x += Math.cos(this.angle) * currentSpeed;
+                this.y += Math.sin(this.angle) * currentSpeed;
+
+                this.wingAngle += this.wingSpeed * speedMultiplier;
+
+                const spawnCount = speedMultiplier > 1.5 ? 3 : 1;
+                for (let i = 0; i < spawnCount; i++) {
+                    goldParticles.push(new GoldParticle(
+                        this.x - Math.cos(this.angle) * 12,
+                        this.y - Math.sin(this.angle) * 12
+                    ));
+                }
+
+                if (this.x < -60 || this.x > canvas.width + 60 || this.y < -60 || this.y > canvas.height + 60) this.reset();
+            }
+            draw(ctx) {
+                if (this.isDead) return;
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle + Math.PI / 2);
+
+                const flapScaleX = Math.cos(this.wingAngle);
+                ctx.shadowColor = this.palette[0]; ctx.shadowBlur = 18;
+
+                const drawWingsSide = (side) => {
+                    ctx.save();
+                    ctx.scale(side * Math.abs(flapScaleX), 1);
+
+                    let grad1 = ctx.createRadialGradient(0, 0, 2, -this.size * 0.8, -this.size * 0.8, this.size * 1.5);
+                    grad1.addColorStop(0, '#ffffff'); grad1.addColorStop(0.3, this.palette[0]);
+                    grad1.addColorStop(0.7, this.palette[1]); grad1.addColorStop(1, '#050b14');
+
+                    ctx.fillStyle = grad1; ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)'; ctx.lineWidth = 0.8;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -this.size * 0.2);
+                    ctx.bezierCurveTo(-this.size * 0.9, -this.size * 1.4, -this.size * 1.8, -this.size * 0.8, -this.size * 1.2, 0);
+                    ctx.bezierCurveTo(-this.size * 0.8, this.size * 0.3, -this.size * 0.3, 0, 0, 0);
+                    ctx.closePath(); ctx.fill(); ctx.stroke();
+
+                    let grad2 = ctx.createRadialGradient(0, 0, 2, -this.size * 0.6, this.size * 0.6, this.size * 1.2);
+                    grad2.addColorStop(0, '#ffffff'); grad2.addColorStop(0.4, this.palette[1]);
+                    grad2.addColorStop(0.8, this.palette[2]); grad2.addColorStop(1, '#000000');
+
+                    ctx.fillStyle = grad2;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.bezierCurveTo(-this.size * 1.1, this.size * 0.2, -this.size * 1.2, this.size * 1.2, -this.size * 0.4, this.size * 1.3);
+                    ctx.bezierCurveTo(-this.size * 0.1, this.size * 1.1, -0.1, this.size * 0.5, 0, 0);
+                    ctx.closePath(); ctx.fill(); ctx.stroke();
+                    ctx.restore();
+                };
+
+                drawWingsSide(1); drawWingsSide(-1);
+
+                ctx.shadowBlur = 10; ctx.shadowColor = '#ffffff'; ctx.fillStyle = '#0f172a';
+                ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 0.8;
+                ctx.beginPath(); ctx.ellipse(0, 0, this.size * 0.11, this.size * 0.55, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.arc(0, -this.size * 0.52, this.size * 0.1, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)'; ctx.lineWidth = 0.8;
+                ctx.beginPath(); ctx.moveTo(0, -this.size * 0.55);
+                ctx.quadraticCurveTo(-this.size * 0.3, -this.size * 0.85, -this.size * 0.4, -this.size * 0.95);
+                ctx.moveTo(0, -this.size * 0.55);
+                ctx.quadraticCurveTo(this.size * 0.3, -this.size * 0.85, this.size * 0.4, -this.size * 0.95);
+                ctx.stroke();
+
+                ctx.fillStyle = '#ffd700';
+                ctx.beginPath(); ctx.arc(-this.size * 0.4, -this.size * 0.95, 1.5, 0, Math.PI * 2);
+                ctx.arc(this.size * 0.4, -this.size * 0.95, 1.5, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        const butterflies = [new Butterfly(0)];
+        resizeCanvas();
+
+        function handleButterflyHit(clientX, clientY) {
+            butterflies.forEach(b => {
+                if (!b.isDead) {
+                    const dist = Math.hypot(clientX - b.x, clientY - b.y);
+                    if (dist < b.size * 2.5) b.die();
+                }
+            });
+        }
+
+        window.addEventListener('click', (e) => handleButterflyHit(e.clientX, e.clientY));
+        window.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 0) handleButterflyHit(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: true });
+
+        function animateCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const isSpeaking = orbContainer.classList.contains('speaking');
+            const speedMultiplier = isSpeaking ? 2.8 : 1.0;
+
+            ctx.strokeStyle = 'rgba(0, 180, 255, 0.14)'; ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            nastSegments.forEach(s => { ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); });
+            ctx.stroke();
+
+            circuitPulses.forEach(p => { p.update(speedMultiplier); p.draw(ctx); });
+
+            for (let i = goldParticles.length - 1; i >= 0; i--) {
+                goldParticles[i].update(); goldParticles[i].draw(ctx);
+                if (goldParticles[i].alpha <= 0) goldParticles.splice(i, 1);
+            }
+            if (goldParticles.length > 250) goldParticles.splice(0, goldParticles.length - 250);
+
+            for (let i = bloodParticles.length - 1; i >= 0; i--) {
+                bloodParticles[i].update(); bloodParticles[i].draw(ctx);
+                if (bloodParticles[i].alpha <= 0) bloodParticles.splice(i, 1);
+            }
+
+            butterflies.forEach(b => { b.update(speedMultiplier); b.draw(ctx); });
+            requestAnimationFrame(animateCanvas);
+        }
+        animateCanvas();
+
+        // ---------------------------------------------------------
+        // ЧИГЛЭЛ ТАНЬЖ ХӨДӨЛГӨӨНТ СУМ ҮҮСГЭХ ЛОГИК
+        // ---------------------------------------------------------
+        function resetArrowState() {
+            orbContainer.classList.remove('show-arrow', 'dir-left', 'dir-right', 'dir-up', 'dir-up-left', 'dir-up-right');
+        }
+
+        function checkAndShowDirection(answerText, backendDirection = null) {
+            resetArrowState();
+
+            let dir = backendDirection;
+            const text = answerText.toLowerCase();
+
+            // Хэрэв серверээс чиглэл тусгайлан ирээгүй бол бичвэрээс танина
+            if (!dir) {
+                const hasUp = text.includes('дээш') || text.includes('давхар') || text.includes('шат');
+                const hasLeft = text.includes('зүүн');
+                const hasRight = text.includes('баруун');
+
+                if (hasUp && hasLeft) dir = 'up-left';
+                else if (hasUp && hasRight) dir = 'up-right';
+                else if (hasUp) dir = 'up';
+                else if (hasLeft) dir = 'left';
+                else if (hasRight) dir = 'right';
+            }
+
+            if (dir) {
+                orbContainer.classList.add('show-arrow');
+
+                if (dir === 'left') {
+                    arrowOverlay.innerText = '⬅️';
+                    orbContainer.classList.add('dir-left');
+                } else if (dir === 'right') {
+                    arrowOverlay.innerText = '➡️';
+                    orbContainer.classList.add('dir-right');
+                } else if (dir === 'up') {
+                    arrowOverlay.innerText = '⬆️';
+                    orbContainer.classList.add('dir-up');
+                } else if (dir === 'up-left') {
+                    arrowOverlay.innerText = '↖️';
+                    orbContainer.classList.add('dir-up-left');
+                } else if (dir === 'up-right') {
+                    arrowOverlay.innerText = '↗️';
+                    orbContainer.classList.add('dir-up-right');
+                }
+            }
+        }
+
+        // ---------------------------------------------------------
+        // ЯРИА БОЛОН АУДИО БОЛОВСРУУЛАХ
+        // ---------------------------------------------------------
+        async function startRecording() {
+            if (isRecording) return;
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    await sendAudioToServer(audioBlob);
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                resetArrowState();
+                orbContainer.classList.add('recording');
+                statusText.innerHTML = "🔴 Сонсож байна... (Гараа авна уу)";
+            } catch (err) {
+                console.error("Микрофон алдаа:", err);
+                statusText.innerHTML = "⚠️ Микрофон хаалттай байна!";
+            }
+        }
+
+        function stopRecording() {
+            if (!isRecording) return;
+            mediaRecorder.stop();
+            isRecording = false;
+            orbContainer.classList.remove('recording');
+            statusText.innerHTML = "⏳ Боловсруулж байна...";
+        }
+
+        async function sendAudioToServer(audioBlob) {
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.wav');
+
+            try {
+                const response = await fetch('/api/process-voice', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (data.error) {
+                    statusText.innerText = "❌ Алдаа: " + data.error;
+                } else {
+                    chatBox.style.display = 'block';
+                    userQuestion.innerText = "🙋 Асуулт: " + data.question;
+                    aiAnswer.innerText = "🤖 Хариулт: " + data.answer;
+                    statusText.innerHTML = "Дэлгэц дээр эсвэл <span class='key-badge'>SPACE</span> товчлуур дээр дарж яриарай";
+
+                    // Чиглэлийн сум идэвхжүүлэх
+                    checkAndShowDirection(data.answer, data.direction);
+
+                    if (data.audio_url) {
+                        orbContainer.classList.add('speaking');
+                        const audio = new Audio(data.audio_url + "?t=" + new Date().getTime());
+                        audio.play();
+                        audio.onended = () => {
+                            orbContainer.classList.remove('speaking');
+                            resetArrowState(); // Ярьж дуусахад сум арилж, orb хэвийн болно
+                        };
+                    } else {
+                        // Аудио байхгүй бол 8 секундийн дараа сумыг арилгана
+                        setTimeout(resetArrowState, 8000);
+                    }
+                }
+            } catch (error) {
+                statusText.innerText = "❌ Холболтын алдаа гарлаа";
+            }
+        }
+
+        // ---------------------------------------------------------
+        // EVENT LISTENERS & ADMIN
+        // ---------------------------------------------------------
+        orbContainer.addEventListener('touchstart', (e) => { e.preventDefault(); startRecording(); }, { passive: false });
+        orbContainer.addEventListener('touchend', (e) => { e.preventDefault(); stopRecording(); }, { passive: false });
+        orbContainer.addEventListener('mousedown', () => startRecording());
+        orbContainer.addEventListener('mouseup', () => stopRecording());
+
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && !e.repeat && document.activeElement.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                startRecording();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.code === 'Space' && document.activeElement.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                stopRecording();
+            }
+        });
+
+        function openAdmin() {
+            const password = prompt("Тохиргоо руу нэвтрэх нууц үгээ оруулна уу:");
+            if (password === "0614") {
+                fetch('/api/school-data').then(res => res.json()).then(data => {
+                    schoolContextInput.value = data.data || '';
+                    adminModal.style.display = 'flex';
+                });
+            } else if (password !== null) {
+                alert("❌ Нууц үг буруу байна!");
+            }
+        }
+
+        function closeAdmin() { adminModal.style.display = 'none'; }
+
+        function saveData() {
+            fetch('/api/school-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: schoolContextInput.value })
+            }).then(() => {
+                alert("Амжилттай хадгалагдлаа!");
+                closeAdmin();
+            });
+        }
+    </script>
+</body>
+</html>
