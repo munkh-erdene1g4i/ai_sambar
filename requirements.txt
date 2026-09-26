@@ -4,3 +4,4 @@ edge-tts
 google-genai
 pandas
 requests
+python-dotenv
