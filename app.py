@@ -18,6 +18,7 @@ app = Flask(__name__)
 # ---------------------------------------------------------
 CHIMEGE_TOKEN = os.environ.get("CHIMEGE_TOKEN", "")
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
+GOOGLE_DOC_WEBHOOK_URL = os.environ.get("GOOGLE_DOC_WEBHOOK_URL", "")
 
 # Google Sheet URL болон сургуулийн ерөнхий мэдээллийн файл
 SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQQqpigfilNtgTowUFvZS3zn6QwUX0eb3IHdQV-of1-j4BJVycqCUWMvo9u8N6AcEwAi3g7pjTjfP6p/pubhtml"
@@ -29,8 +30,27 @@ LAST_FETCH_TIME = None
 
 
 # ---------------------------------------------------------
-# 2. МЭДЭЭЛЭЛ БОЛОВСРУУЛАХ ФУНКЦҮҮД
+# 2. МЭДЭЭЛЭЛ БОЛОҮСРУУЛАХ БОЛОН САНАЛ ХҮСЭЛТИЙН ФУНКЦҮҮД
 # ---------------------------------------------------------
+def send_to_google_doc(feedback_text):
+    """Санал, хүсэлтийг Google Doc руу Webhook ашиглан илгээнэ."""
+    if not GOOGLE_DOC_WEBHOOK_URL:
+        print("⚠️ GOOGLE_DOC_WEBHOOK_URL тохируулаагүй байна.")
+        return False
+
+    try:
+        payload = {"feedback": feedback_text}
+        res = requests.post(GOOGLE_DOC_WEBHOOK_URL, json=payload, timeout=10)
+        if res.status_code == 200:
+            print("✅ Дэлгэрэнгүй санал хүсэлт Google Doc дээр хадгалагдлаа.")
+            return True
+        else:
+            print(f"❌ Google Doc рүү явуулахад алдаа заалаа: {res.status_code}")
+    except Exception as e:
+        print(f"❌ Google Doc рүү явуулахад алдаа гарлаа: {e}")
+    return False
+
+
 def clean_sheet_url(url):
     """pubhtml холбоосыг CSV татах форматын холбоос руу хөрвүүлнэ."""
     if "pubhtml" in url:
@@ -142,11 +162,12 @@ def generate_ai_response(
 {context_text}
 
 СТРИКТ ДҮРЭМ:
-1. Багшийн байршил, хичээлийн хуваарь асуувал "ХИЧЭЭЛИЙН ХУВААРИЙН МЭДЭЭЛЭЛ" хэсгээс харна.
-2. Сургуулийн журам, төлбөр, захиргаа, бусад асуултад "СУРГУУЛИЙН ЕРӨНХИЙ МЭДЭЭЛЭЛ" хэсгээс хариулна.
-3. Хэрэв сайн уу, баяртай гэх мэт энгийн мэндчилгээ байвал найрсгаар товч хариулна.
-4. Хариултыг дуу болон текстээр уншихад тохиромжтой, ЦЭВЭР 1-2 ӨГҮҮЛБЭРТ багтаан монгол хэлээр хариул.
-5. Код, тусгай тэмдэгт, өөрийн бодолт хэвлэж болохгүй.
+1. Хэрэв хэрэглэгч санал, хүсэлт, гомдол хэлж байгаа бол: "Таны санал хүсэлтийг хүлээн авч сургуулийн захиргаанд хадгаллаа. Баярлалаа!" гэж хариул.
+2. Багшийн байршил, хичээлийн хуваарь асуувал "ХИЧЭЭЛИЙН ХУВААРИЙН МЭДЭЭЛЭЛ" хэсгээс харна.
+3. Сургуулийн журам, төлбөр, захиргаа, бусад асуултад "СУРГУУЛИЙН ЕРӨНХИЙ МЭДЭЭЛЭЛ" хэсгээс хариулна.
+4. Хэрэв сайн уу, баяртай гэх мэт энгийн мэндчилгээ байвал найрсгаар товч хариулна.
+5. Хариултыг дуу болон текстээр уншихад тохиромжтой, ЦЭВЭР 1-2 ӨГҮҮЛБЭРТ багтаан монгол хэлээр хариул.
+6. Код, тусгай тэмдэгт, өөрийн бодолт хэвлэж болохгүй.
 """
 
     url = "https://openrouter.ai/api/v1/chat/completions"
@@ -266,6 +287,12 @@ def process_voice():
             }),
             400,
         )
+
+    # Санал, хүсэлт, гомдлын шинжтэй үгсийг шалгаж Google Doc руу дэлгэрэнгүй хадгална
+    feedback_keywords = ["санал", "гомдол", "хүсэлт", "гомдолтой", "хүсэж байна", "шүүмж"]
+    if any(keyword in question_text.lower() for keyword in feedback_keywords):
+        detailed_feedback = f"Хэрэглэгчийн хэлсэн санал/хүсэлт: \"{question_text}\""
+        send_to_google_doc(detailed_feedback)
 
     tz_mn = datetime.timezone(datetime.timedelta(hours=8))
     now = datetime.datetime.now(tz_mn)
