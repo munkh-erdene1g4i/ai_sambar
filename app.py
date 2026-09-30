@@ -34,9 +34,12 @@ teacher_cooldowns = {}  # MAC хаяг -> сүүлд мэндчилсэн хуг
 pending_greetings = []  # Вэб рүү очоогүй байгаа мэндчилгээний жагсаалт
 COOLDOWN_SECONDS = 60  # Нэг багшид 1 минутад зөвхөн 1 удаа л мэндчилнэ
 
+# BLE Төлөв хянах хувьсагч
+last_ble_ping = 0
+
 
 # ---------------------------------------------------------
-# 2. МЭДЭЭЛЭЛ БОЛОВСРУУЛАХ БОЛОН САНАЛ ХҮСЭЛТИЙН ФУНКЦҮҮД
+# 2. МЭДЭЭЛЭЛ БОЛОН САНАЛ ХҮСЭЛТИЙН ФУНКЦҮҮД
 # ---------------------------------------------------------
 def send_to_google_doc(feedback_text):
     """Санал, хүсэлтийг Google Doc руу Webhook ашиглан илгээнэ."""
@@ -324,11 +327,14 @@ def get_audio():
 
 
 # ---------------------------------------------------------
-# 5. ESP32 BEACON PRESENCE API ROUTE-УУД
+# 5. ESP32 BEACON PRESENCE & BLE STATUS API ROUTE-УУД
 # ---------------------------------------------------------
 @app.route("/api/beacon-presence", methods=["POST"])
 def handle_beacon():
     """ESP32-оос ирсэн багшийн Beacon датаг хүлээн авна."""
+    global last_ble_ping
+    last_ble_ping = time.time()  # BLE дохио ирсэн хугацааг хадгална
+
     data = request.json or {}
     teacher_name = data.get("teacher", "Багш")
     mac = data.get("mac", "").lower()
@@ -362,6 +368,23 @@ def handle_beacon():
             return jsonify({"error": str(e)}), 500
 
     return jsonify({"status": "ignored", "reason": "cooldown_active"})
+
+
+@app.route("/api/ble-ping", methods=["POST"])
+def ble_ping():
+    """ESP32 идэвхтэй байгааг илтгэх Heartbeat API."""
+    global last_ble_ping
+    last_ble_ping = time.time()
+    return jsonify({"status": "pong"})
+
+
+@app.route("/api/ble-status", methods=["GET"])
+def get_ble_status():
+    """Вэб браузер BLE төхөөрөмжийн холболтын төлөвийг шалгах API."""
+    global last_ble_ping
+    # Сүүлийн 15 секундын дотор ESP32 дохио ирсэн бол Ногоон (True)
+    is_connected = (time.time() - last_ble_ping) < 15
+    return jsonify({"connected": is_connected})
 
 
 @app.route("/api/get-greeting", methods=["GET"])
