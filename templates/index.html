@@ -121,7 +121,6 @@
             pointer-events: none;
         }
 
-        /* ХӨДӨЛГӨӨНТ СУМНЫ ЭЛЕМЕНТ */
         .arrow-overlay {
             position: absolute;
             font-size: 6.5rem;
@@ -161,7 +160,6 @@
             100% { transform: scale(1.18); box-shadow: 0 0 80px #00f2fe, 0 0 130px #00c6ff; filter: hue-rotate(40deg); }
         }
 
-        /* СУМ ИДЭВХЖИХ ҮЕИЙН АНИМАЦИУД */
         .orb-container.show-arrow .orb {
             opacity: 0.25;
             transform: scale(0.85);
@@ -171,41 +169,31 @@
             opacity: 1;
         }
 
-        .orb-container.dir-left .arrow-overlay {
-            animation: arrowAnimLeft 0.8s infinite alternate ease-in-out;
-        }
+        .orb-container.dir-left .arrow-overlay { animation: arrowAnimLeft 0.8s infinite alternate ease-in-out; }
         @keyframes arrowAnimLeft {
             0% { transform: translateX(15px) scale(1); }
             100% { transform: translateX(-25px) scale(1.25); }
         }
 
-        .orb-container.dir-right .arrow-overlay {
-            animation: arrowAnimRight 0.8s infinite alternate ease-in-out;
-        }
+        .orb-container.dir-right .arrow-overlay { animation: arrowAnimRight 0.8s infinite alternate ease-in-out; }
         @keyframes arrowAnimRight {
             0% { transform: translateX(-15px) scale(1); }
             100% { transform: translateX(25px) scale(1.25); }
         }
 
-        .orb-container.dir-up .arrow-overlay {
-            animation: arrowAnimUp 0.8s infinite alternate ease-in-out;
-        }
+        .orb-container.dir-up .arrow-overlay { animation: arrowAnimUp 0.8s infinite alternate ease-in-out; }
         @keyframes arrowAnimUp {
             0% { transform: translateY(15px) scale(1); }
             100% { transform: translateY(-25px) scale(1.25); }
         }
 
-        .orb-container.dir-up-left .arrow-overlay {
-            animation: arrowAnimUpLeft 0.8s infinite alternate ease-in-out;
-        }
+        .orb-container.dir-up-left .arrow-overlay { animation: arrowAnimUpLeft 0.8s infinite alternate ease-in-out; }
         @keyframes arrowAnimUpLeft {
             0% { transform: translate(12px, 12px) scale(1); }
             100% { transform: translate(-20px, -20px) scale(1.25); }
         }
 
-        .orb-container.dir-up-right .arrow-overlay {
-            animation: arrowAnimUpRight 0.8s infinite alternate ease-in-out;
-        }
+        .orb-container.dir-up-right .arrow-overlay { animation: arrowAnimUpRight 0.8s infinite alternate ease-in-out; }
         @keyframes arrowAnimUpRight {
             0% { transform: translate(-12px, 12px) scale(1); }
             100% { transform: translate(20px, -20px) scale(1.25); }
@@ -292,17 +280,23 @@
             color: #94a3b8;
         }
 
-        /* BLE STATUS INDICATOR CSS */
+        /* 🔴/🟢 BLE ТӨЛӨВ ДЭЛГЭЦИЙН БҮҮР БАРУУН ДООД БУЛАНД */
         .ble-status-box {
+            position: fixed;
+            bottom: 15px;
+            right: 20px;
+            z-index: 100;
             display: flex;
             align-items: center;
             gap: 8px;
-            background: rgba(255, 255, 255, 0.08);
-            padding: 6px 12px;
+            background: rgba(12, 27, 43, 0.85);
+            padding: 8px 14px;
             border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             font-size: 0.85rem;
             color: #e2e8f0;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
         }
 
         .ble-dot {
@@ -487,12 +481,6 @@
                 <div class="date-text" id="dateDisplay">----.--.--</div>
             </div>
 
-            <!-- BLE СТАТУС БӨӨРӨНХИЙ -->
-            <div class="ble-status-box">
-                <div class="ble-dot" id="bleDot"></div>
-                <span id="bleText">BLE: Холбогдоогүй</span>
-            </div>
-
             <div class="weather-box">
                 <div class="weather-icon" id="weatherIcon">☀️</div>
                 <div class="weather-info">
@@ -509,6 +497,12 @@
             </div>
         </div>
     </footer>
+
+    <!-- 🟢/🔴 БҮҮР БАРУУН ДООД БУЛАНД БАЙРЛАСАН BLE ИНДИКАТОР -->
+    <div class="ble-status-box">
+        <div class="ble-dot" id="bleDot"></div>
+        <span id="bleText">BLE: Холбогдоогүй</span>
+    </div>
 
     <div class="modal" id="adminModal">
         <div class="modal-content">
@@ -537,7 +531,7 @@
         let mediaRecorder;
         let audioChunks = [];
         let isRecording = false;
-        let hideChatTimeout = null; // 15 секундын таймерын хувьсагч
+        let hideChatTimeout = null;
 
         // ТЕКСТИЙГ ДЭЛГЭЦЭНД ХАРУУЛААД 15 СЕКУНТЫН ДАРАА АРИЛГАХ ФУНКЦ
         function showChat(question, answer) {
@@ -551,7 +545,7 @@
 
             hideChatTimeout = setTimeout(() => {
                 chatBox.style.display = 'none';
-            }, 15000); // 15,000 миллисекунд = 15 секунд
+            }, 15000);
         }
 
         function updateDateTime() {
@@ -616,18 +610,15 @@
             [
                 "🏫 СУРГУУЛИЙН ЗАР: Сурагчид хичээлийн цагаас хоцрохгүй, сургуулийн дүрмээ баримталцгаая!",
                 "🧠 БОЛОВСРОЛ: Помодоро техник (25 минут хичээллээд 5 минут амрах) нь анхаарал төвлөрлийг 40% нэмэгдүүлдэг.",
-                "🔬 ШИНЖЛЭХ УХААН: Эх дэлхийн хүчилтөрөгчийн 70 гаруй хувийг далай тэнгисийн замаг үйлдвэрлэдэг.",
-                "💡 АМЖИЛТЫН ЗӨВЛӨМЖ: Шинэ үг цээжлэхдээ орой унтахаас өмнө сэргээн санавал тархинд чанга хадгалагддаг."
+                "🔬 ШИНЖЛЭХ УХААН: Эх дэлхийн хүчилтөрөгчийн 70 гаруй хувийг далай тэнгисийн замаг үйлдвэрлэдэг."
             ],
             [
                 "📚 НОМЫН САН: Сургуулийн номын санд шинжлэх ухаан болон зөгнөлт уран зохиолын шинэ номууд ирлээ.",
                 "🏆 СУРГУУЛИЙН АМЖИЛТ: Манай сургуулийн баг тамирчид дүүргийн олимпиадад амжилттай оролцлоо!",
-                "🌌 САНСАР ОРЧИН: Нарны аймаг дотроос Сугар гараг хамгийн халуун нь бөгөөд гадаргуу нь 465°C хүрдэг.",
                 "📖 СУРАЛЦАХУЙ: Аливаа зүйлийг бусдад тайлбарлан зааж өгөх нь мэдлэгээ батжуулах хамгийн шилдэг арга юм."
             ],
             [
                 "💻 АИ ТУСЛАХ: AI туслахаас хичээлийн хуваарь болон математик, физик, гадаад хэлний асуултаа асуугаарай.",
-                "🎨 СУРГУУЛИЙН ИДЭВХИ: Энэ баасан гарагт сургуулийн авьяаслаг сурагчдын урлагийн үзүүлбэр болно.",
                 "🐝 БАЙГАЛЬ ЭХ: Зөгий 1 кг бал цуглуулахын тулд 4 сая гаруй цэцэгнд суудаг ажилсаг амьтан юм.",
                 "🌱 ЭРҮҮЛ МЭНД: Хичээлийн хооронд цэвэр агаар амьсгалж, нүдний дасгал хийх нь тархийг сэргээдэг."
             ]
@@ -635,19 +626,31 @@
 
         let currentBatchIndex = 0;
 
+        // 🔄 УРСАЖ БУЙ МЭДЭЭЛЭЛД АРГЫН ТООЛОЛ НЭМЖ ШИНЭЧЛЭХ ФУНКЦ
         function updateNewsTicker() {
             const newsTicker = document.getElementById('newsTicker');
             const currentNewsSet = newsBatches[currentBatchIndex % newsBatches.length];
             
+            // Тухайн өдрийн аргын тооллын мэдээллийг бэлтгэх
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const daysMn = ['Ням', 'Даваа', 'Мягмар', 'Лхагва', 'Пүрэв', 'Баасан', 'Бямба'];
+            const dayName = daysMn[now.getDay()];
+
+            const solarDateText = `📅 Аргын тоолол: ${year} оны ${month}-р сарын ${day}-ний өдөр (${dayName} гараг)`;
+
             const allItems = [
                 `🌤️ Цаг агаар: ${weatherTipText}`,
+                solarDateText, // 👈 АРГЫН ТООЛЛЫН МЭДЭЭЛЭЛ НЭМЭГДСЭН
                 ...currentNewsSet
             ];
 
             newsTicker.style.animation = 'none';
             newsTicker.offsetHeight;
             newsTicker.style.animation = 'marquee 55s linear infinite';
-            newsTicker.innerText = allItems.join("   •   ") + "   •_ ";
+            newsTicker.innerText = allItems.join("   •   ") + "   •   ";
 
             currentBatchIndex++;
         }
@@ -1084,7 +1087,6 @@
                 if (data.error) {
                     statusText.innerText = "❌ Алдаа: " + data.error;
                 } else {
-                    // 15 Секундын дараа нуугддаг функцыг дуудна
                     showChat("🙋 Асуулт: " + data.question, "🤖 Хариулт: " + data.answer);
                     statusText.innerHTML = "Дэлгэц дээр эсвэл <span class='key-badge'>SPACE</span> товчлуур дээр дарж яриарай";
 
@@ -1151,9 +1153,6 @@
             });
         }
 
-        // ---------------------------------------------------------
-        // ESP32 BLE ТӨЛӨВ ШАЛГАХ LOGIC
-        // ---------------------------------------------------------
         async function checkBleStatus() {
             try {
                 const response = await fetch('/api/ble-status');
@@ -1172,19 +1171,15 @@
             }
         }
 
-        setInterval(checkBleStatus, 3000); // 3 секунд тутамд BLE төлөвийг шалгана
+        setInterval(checkBleStatus, 3000);
         checkBleStatus();
 
-        // ---------------------------------------------------------
-        // ESP32 BEACON БАГШИЙН МЭНДЧИЛГЭЭ ШАЛГАХ LOGIC
-        // ---------------------------------------------------------
         async function checkBeaconGreeting() {
             try {
                 const response = await fetch('/api/get-greeting');
                 const data = await response.json();
                 
                 if (data.has_greeting) {
-                    // 15 Секундын дараа нуугддаг функцыг дуудна
                     showChat("📡 Beacon Мэдрэгч:", "👋 " + data.text);
                     statusText.innerText = data.text;
                     
@@ -1192,7 +1187,7 @@
                     const audio = new Audio(data.audio_url);
                     
                     audio.play().catch(err => {
-                        console.log("Autoplay хязгаарлагдсан байна. Дэлгэц дээр нэг удаа дараарай.");
+                        console.log("Autoplay хязгаарлагдсан байна.");
                     });
 
                     audio.onended = () => {
