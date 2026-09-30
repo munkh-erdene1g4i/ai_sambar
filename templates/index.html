@@ -171,7 +171,6 @@
             opacity: 1;
         }
 
-        /* ЗҮҮН ТИЙШ СУМ */
         .orb-container.dir-left .arrow-overlay {
             animation: arrowAnimLeft 0.8s infinite alternate ease-in-out;
         }
@@ -180,7 +179,6 @@
             100% { transform: translateX(-25px) scale(1.25); }
         }
 
-        /* БАРУУН ТИЙШ СУМ */
         .orb-container.dir-right .arrow-overlay {
             animation: arrowAnimRight 0.8s infinite alternate ease-in-out;
         }
@@ -189,7 +187,6 @@
             100% { transform: translateX(25px) scale(1.25); }
         }
 
-        /* ДЭЭШЭЭ СУМ (ДАВХАР ГАРАХ) */
         .orb-container.dir-up .arrow-overlay {
             animation: arrowAnimUp 0.8s infinite alternate ease-in-out;
         }
@@ -198,7 +195,6 @@
             100% { transform: translateY(-25px) scale(1.25); }
         }
 
-        /* ЗҮҮН ДЭЭШЭЭ СУМ */
         .orb-container.dir-up-left .arrow-overlay {
             animation: arrowAnimUpLeft 0.8s infinite alternate ease-in-out;
         }
@@ -207,7 +203,6 @@
             100% { transform: translate(-20px, -20px) scale(1.25); }
         }
 
-        /* БАРУУН ДЭЭШЭЭ СУМ */
         .orb-container.dir-up-right .arrow-overlay {
             animation: arrowAnimUpRight 0.8s infinite alternate ease-in-out;
         }
@@ -255,7 +250,6 @@
             line-height: 1.6;
         }
 
-        /* FOOTER & TICKER STYLES */
         footer {
             width: 100%;
             max-width: 900px;
@@ -383,7 +377,6 @@
             100% { transform: translateX(-100%); }
         }
 
-        /* Modal Styles */
         .modal {
             display: none;
             position: fixed;
@@ -446,7 +439,6 @@
     <main>
         <div class="orb-container" id="orbContainer">
             <div class="orb"></div>
-            <!-- СУМНЫ ЭЛЕМЕНТ -->
             <div class="arrow-overlay" id="arrowOverlay">➔</div>
         </div>
 
@@ -509,9 +501,6 @@
         let audioChunks = [];
         let isRecording = false;
 
-        // ---------------------------------------------------------
-        // ЦАГ, ОН САР ӨДӨР БА ЗҮҮНХАРАА ЦАГ АГААР
-        // ---------------------------------------------------------
         function updateDateTime() {
             const now = new Date();
             const year = now.getFullYear();
@@ -570,7 +559,6 @@
             }
         }
 
-        // БОЛОВСРОЛ БА СУРГУУЛИЙН МЭДЭЭЛЛИЙН БАГЦУУД (5 МИНУТ ТУТАМ СОЛИГДОНО)
         const newsBatches = [
             [
                 "🏫 СУРГУУЛИЙН ЗАР: Сурагчид хичээлийн цагаас хоцрохгүй, сургуулийн дүрмээ баримталцгаая!",
@@ -615,9 +603,6 @@
         setInterval(fetchWeather, 600000);
         setInterval(updateNewsTicker, 5 * 60 * 1000);
 
-        // ---------------------------------------------------------
-        // CANVAS ANIMATION
-        // ---------------------------------------------------------
         const canvas = document.getElementById('bgCanvas');
         const ctx = canvas.getContext('2d');
 
@@ -956,9 +941,6 @@
         }
         animateCanvas();
 
-        // ---------------------------------------------------------
-        // ЧИГЛЭЛ ТАНЬЖ ХӨДӨЛГӨӨНТ СУМ ҮҮСГЭХ ЛОГИК
-        // ---------------------------------------------------------
         function resetArrowState() {
             orbContainer.classList.remove('show-arrow', 'dir-left', 'dir-right', 'dir-up', 'dir-up-left', 'dir-up-right');
         }
@@ -969,7 +951,6 @@
             let dir = backendDirection;
             const text = answerText.toLowerCase();
 
-            // Хэрэв серверээс чиглэл тусгайлан ирээгүй бол бичвэрээс танина
             if (!dir) {
                 const hasUp = text.includes('дээш') || text.includes('давхар') || text.includes('шат');
                 const hasLeft = text.includes('зүүн');
@@ -1004,9 +985,6 @@
             }
         }
 
-        // ---------------------------------------------------------
-        // ЯРИА БОЛОН АУДИО БОЛОВСРУУЛАХ
-        // ---------------------------------------------------------
         async function startRecording() {
             if (isRecording) return;
             try {
@@ -1058,7 +1036,6 @@
                     aiAnswer.innerText = "🤖 Хариулт: " + data.answer;
                     statusText.innerHTML = "Дэлгэц дээр эсвэл <span class='key-badge'>SPACE</span> товчлуур дээр дарж яриарай";
 
-                    // Чиглэлийн сум идэвхжүүлэх
                     checkAndShowDirection(data.answer, data.direction);
 
                     if (data.audio_url) {
@@ -1067,10 +1044,9 @@
                         audio.play();
                         audio.onended = () => {
                             orbContainer.classList.remove('speaking');
-                            resetArrowState(); // Ярьж дуусахад сум арилж, orb хэвийн болно
+                            resetArrowState();
                         };
                     } else {
-                        // Аудио байхгүй бол 8 секундийн дараа сумыг арилгана
                         setTimeout(resetArrowState, 8000);
                     }
                 }
@@ -1079,9 +1055,6 @@
             }
         }
 
-        // ---------------------------------------------------------
-        // EVENT LISTENERS & ADMIN
-        // ---------------------------------------------------------
         orbContainer.addEventListener('touchstart', (e) => { e.preventDefault(); startRecording(); }, { passive: false });
         orbContainer.addEventListener('touchend', (e) => { e.preventDefault(); stopRecording(); }, { passive: false });
         orbContainer.addEventListener('mousedown', () => startRecording());
@@ -1125,6 +1098,39 @@
                 closeAdmin();
             });
         }
+
+        // ---------------------------------------------------------
+        // ESP32 BEACON БАГШИЙН МЭНДЧИЛГЭЭ ШАЛГАХ LOGIC
+        // ---------------------------------------------------------
+        async function checkBeaconGreeting() {
+            try {
+                const response = await fetch('/api/get-greeting');
+                const data = await response.json();
+                
+                if (data.has_greeting) {
+                    chatBox.style.display = 'block';
+                    userQuestion.innerText = "📡 Beacon Мэдрэгч:";
+                    aiAnswer.innerText = "👋 " + data.text;
+                    statusText.innerText = data.text;
+                    
+                    orbContainer.classList.add('speaking');
+                    const audio = new Audio(data.audio_url);
+                    
+                    audio.play().catch(err => {
+                        console.log("Autoplay хязгаарлагдсан байна. Дэлгэц дээр нэг удаа дараарай.");
+                    });
+
+                    audio.onended = () => {
+                        orbContainer.classList.remove('speaking');
+                        statusText.innerHTML = "Дэлгэц дээр эсвэл <span class='key-badge'>SPACE</span> товчлуур дээр дарж яриарай";
+                    };
+                }
+            } catch (err) {
+                console.error("Beacon шалгахад алдаа гарлаа:", err);
+            }
+        }
+
+        setInterval(checkBeaconGreeting, 1500);
     </script>
 </body>
 </html>
