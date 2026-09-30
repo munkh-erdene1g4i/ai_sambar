@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import io
 import os
+import time
 import edge_tts
 import pandas as pd
 import requests
@@ -28,9 +29,14 @@ DATA_FILE = "school_data.txt"
 SCHEDULE_DF = None
 LAST_FETCH_TIME = None
 
+# Beacon мэдээлэл хянах глобал хувьсагчид
+teacher_cooldowns = {}  # MAC хаяг -> сүүлд мэндчилсэн хугацаа
+pending_greetings = []  # Вэб рүү очоогүй байгаа мэндчилгээний жагсаалт
+COOLDOWN_SECONDS = 180  # Нэг багшид 3 минутад зөвхөн 1 удаа л мэндчилнэ
+
 
 # ---------------------------------------------------------
-# 2. МЭДЭЭЛЭЛ БОЛОҮСРУУЛАХ БОЛОН САНАЛ ХҮСЭЛТИЙН ФУНКЦҮҮД
+# 2. МЭДЭЭЛЭЛ БОЛОВСРУУЛАХ БОЛОН САНАЛ ХҮСЭЛТИЙН ФУНКЦҮҮД
 # ---------------------------------------------------------
 def send_to_google_doc(feedback_text):
     """Санал, хүсэлтийг Google Doc руу Webhook ашиглан илгээнэ."""
@@ -144,17 +150,10 @@ def build_smart_context(user_question, current_day, current_time):
 # ---------------------------------------------------------
 # 3. OPENROUTER AI ХЭСЭГ
 # ---------------------------------------------------------
-def generate_ai_response(
-    user_question, context_text, current_day, current_time
-):
-    """
-    OpenRouter API-аар дамжуулан баталгаатай идэвхтэй AI загваруудаас хариулт авна.
-    """
+def generate_ai_response(user_question, context_text, current_day, current_time):
+    """OpenRouter API-аар дамжуулан AI хариулт авна."""
     if not OPENROUTER_API_KEY:
         return "Алдаа: OPENROUTER_API_KEY олдсонгүй. .env файлаа шалгана уу."
-
-    masked_key = OPENROUTER_API_KEY[:12] + "..." + OPENROUTER_API_KEY[-4:]
-    print(f"🔑 API Key: {masked_key}")
 
     system_instruction = f"""Чи бол сургуулийн мэдээллийн ухаалаг туслах AI.
 
@@ -171,11 +170,10 @@ def generate_ai_response(
 """
 
     url = "https://openrouter.ai/api/v1/chat/completions"
-
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY.strip()}",
         "Content-Type": "application/json",
-        "HTTP-Referer": "http://localhost:5000",
+        "HTTP-Referer": "https://ai-sambar.onrender.com",
         "X-Title": "School AI Assistant",
     }
 
@@ -198,17 +196,11 @@ def generate_ai_response(
 
         try:
             res = requests.post(url, headers=headers, json=payload, timeout=15)
-
             if res.status_code == 200:
                 data = res.json()
-                print(f"✅ Амжилттай хариулт өгсөн загвар: {model_name}")
                 return data["choices"][0]["message"]["content"].strip()
             else:
-                print(
-                    f"⚠️ {model_name} дээр алдаа гарлаа [{res.status_code}]: {res.text}"
-                )
                 last_error = f"[{res.status_code}] {res.text}"
-
         except Exception as e:
             last_error = str(e)
             continue
@@ -288,7 +280,6 @@ def process_voice():
             400,
         )
 
-    # Санал, хүсэлт, гомдлын шинжтэй үгсийг шалгаж Google Doc руу дэлгэрэнгүй хадгална
     feedback_keywords = ["санал", "гомдол", "хүсэлт", "гомдолтой", "хүсэж байна", "шүүмж"]
     if any(keyword in question_text.lower() for keyword in feedback_keywords):
         detailed_feedback = f"Хэрэглэгчийн хэлсэн санал/хүсэлт: \"{question_text}\""
@@ -330,6 +321,56 @@ def get_audio():
     if os.path.exists("response.mp3"):
         return send_file("response.mp3", mimetype="audio/mpeg")
     return jsonify({"error": "Аудио файл олдсонгүй"}), 404
+
+
+# ---------------------------------------------------------
+# 5. ESP32 BEACON PRESENCE API ROUTE-УУД
+# ---------------------------------------------------------
+@app.route("/api/beacon-presence", methods=["POST"])
+def handle_beacon():
+    """ESP32-оос ирсэн багшийн Beacon датаг хүлээн авна."""
+    data = request.json or {}
+    teacher_name = data.get("teacher", "Багш")
+    mac = data.get("mac", "").lower()
+
+    now = time.time()
+    last_seen = teacher_cooldowns.get(mac, 0)
+
+    # Cooldown хугацаа дууссан бол шинээр мэндчилгээ үүсгэнэ
+    if now - last_seen > COOLDOWN_SECONDS:
+        teacher_cooldowns[mac] = now
+        greeting_text = f"{teacher_name} багш аа, тавтай морил!"
+
+        os.makedirs("static", exist_ok=True)
+        clean_mac = mac.replace(":", "")
+        audio_filename = f"greeting_{clean_mac}.mp3"
+        audio_path = os.path.join("static", audio_filename)
+
+        try:
+            asyncio.run(text_to_speech_edge(greeting_text, audio_path))
+
+            pending_greetings.append(
+                {
+                    "text": greeting_text,
+                    "audio_url": f"/static/{audio_filename}?t={int(now)}",
+                }
+            )
+            print(f"📢 [Beacon] Мэндчилгээ үүсгэлээ: {greeting_text}")
+            return jsonify({"status": "success", "message": greeting_text})
+        except Exception as e:
+            print(f"❌ Beacon TTS алдаа: {e}")
+            return jsonify({"error": str(e)}), 500
+
+    return jsonify({"status": "ignored", "reason": "cooldown_active"})
+
+
+@app.route("/api/get-greeting", methods=["GET"])
+def get_greeting():
+    """Вэб браузер идэвхтэй мэндчилгээ байгаа эсэхийг шалгана."""
+    if pending_greetings:
+        greeting = pending_greetings.pop(0)
+        return jsonify({"has_greeting": True, **greeting})
+    return jsonify({"has_greeting": False})
 
 
 if __name__ == "__main__":
