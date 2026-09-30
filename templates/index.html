@@ -236,6 +236,7 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             display: none;
+            transition: opacity 0.5s ease;
         }
 
         .question {
@@ -289,6 +290,33 @@
         .date-text {
             font-size: 0.85rem;
             color: #94a3b8;
+        }
+
+        /* BLE STATUS INDICATOR CSS */
+        .ble-status-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            font-size: 0.85rem;
+            color: #e2e8f0;
+        }
+
+        .ble-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #ef4444; /* Холбогдоогүй үед УЛААН */
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+            transition: all 0.4s ease;
+        }
+
+        .ble-dot.connected {
+            background-color: #22c55e; /* Холбогдсон үед НОГООН */
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.9);
         }
 
         .weather-box {
@@ -459,6 +487,12 @@
                 <div class="date-text" id="dateDisplay">----.--.--</div>
             </div>
 
+            <!-- BLE СТАТУС БӨӨРӨНХИЙ -->
+            <div class="ble-status-box">
+                <div class="ble-dot" id="bleDot"></div>
+                <span id="bleText">BLE: Холбогдоогүй</span>
+            </div>
+
             <div class="weather-box">
                 <div class="weather-icon" id="weatherIcon">☀️</div>
                 <div class="weather-info">
@@ -496,10 +530,29 @@
         const aiAnswer = document.getElementById('aiAnswer');
         const adminModal = document.getElementById('adminModal');
         const schoolContextInput = document.getElementById('schoolContextInput');
+        
+        const bleDot = document.getElementById('bleDot');
+        const bleText = document.getElementById('bleText');
 
         let mediaRecorder;
         let audioChunks = [];
         let isRecording = false;
+        let hideChatTimeout = null; // 15 секундын таймерын хувьсагч
+
+        // ТЕКСТИЙГ ДЭЛГЭЦЭНД ХАРУУЛААД 15 СЕКУНТЫН ДАРАА АРИЛГАХ ФУНКЦ
+        function showChat(question, answer) {
+            chatBox.style.display = 'block';
+            userQuestion.innerText = question;
+            aiAnswer.innerText = answer;
+
+            if (hideChatTimeout) {
+                clearTimeout(hideChatTimeout);
+            }
+
+            hideChatTimeout = setTimeout(() => {
+                chatBox.style.display = 'none';
+            }, 15000); // 15,000 миллисекунд = 15 секунд
+        }
 
         function updateDateTime() {
             const now = new Date();
@@ -1031,9 +1084,8 @@
                 if (data.error) {
                     statusText.innerText = "❌ Алдаа: " + data.error;
                 } else {
-                    chatBox.style.display = 'block';
-                    userQuestion.innerText = "🙋 Асуулт: " + data.question;
-                    aiAnswer.innerText = "🤖 Хариулт: " + data.answer;
+                    // 15 Секундын дараа нуугддаг функцыг дуудна
+                    showChat("🙋 Асуулт: " + data.question, "🤖 Хариулт: " + data.answer);
                     statusText.innerHTML = "Дэлгэц дээр эсвэл <span class='key-badge'>SPACE</span> товчлуур дээр дарж яриарай";
 
                     checkAndShowDirection(data.answer, data.direction);
@@ -1100,6 +1152,30 @@
         }
 
         // ---------------------------------------------------------
+        // ESP32 BLE ТӨЛӨВ ШАЛГАХ LOGIC
+        // ---------------------------------------------------------
+        async function checkBleStatus() {
+            try {
+                const response = await fetch('/api/ble-status');
+                const data = await response.json();
+
+                if (data.connected) {
+                    bleDot.classList.add('connected');
+                    bleText.innerText = "BLE: Холбогдсон";
+                } else {
+                    bleDot.classList.remove('connected');
+                    bleText.innerText = "BLE: Холбогдоогүй";
+                }
+            } catch (err) {
+                bleDot.classList.remove('connected');
+                bleText.innerText = "BLE: Холбогдоогүй";
+            }
+        }
+
+        setInterval(checkBleStatus, 3000); // 3 секунд тутамд BLE төлөвийг шалгана
+        checkBleStatus();
+
+        // ---------------------------------------------------------
         // ESP32 BEACON БАГШИЙН МЭНДЧИЛГЭЭ ШАЛГАХ LOGIC
         // ---------------------------------------------------------
         async function checkBeaconGreeting() {
@@ -1108,9 +1184,8 @@
                 const data = await response.json();
                 
                 if (data.has_greeting) {
-                    chatBox.style.display = 'block';
-                    userQuestion.innerText = "📡 Beacon Мэдрэгч:";
-                    aiAnswer.innerText = "👋 " + data.text;
+                    // 15 Секундын дараа нуугддаг функцыг дуудна
+                    showChat("📡 Beacon Мэдрэгч:", "👋 " + data.text);
                     statusText.innerText = data.text;
                     
                     orbContainer.classList.add('speaking');
