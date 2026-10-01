@@ -237,9 +237,9 @@ def process_voice():
         audio_file = request.files["audio"]
         audio_data = audio_file.read()
 
-        # Chimege STT API 2KB шаарддаг тул 2.5KB-аас бага файлыг сэрвэр дээрээс шууд буцаана
-        if len(audio_data) < 2500:
-            return jsonify({"error": "Аудио файл хэт богино байна. Товчлуурыг дарж байгаад арай урт, тод ярина уу!"}), 400
+        # Бага хэмжээтэй аудио ирсэн тохиолдолд
+        if len(audio_data) < 1000:
+            return jsonify({"error": "Аудио файл хэт богино байна. Товчлуурыг сайн дарж байгаад ярина уу!"}), 400
 
         stt_url = "https://api.chimege.com/v1.2/transcribe"
         stt_headers = {
@@ -267,7 +267,7 @@ def process_voice():
         question_text = request.json.get("text", "").strip()
 
     if not question_text:
-        return jsonify({"error": "Асуулт ойлгогдсонгүй. Товчоо дарж байгаад дахин асууна уу."}), 400
+        return jsonify({"error": "Асуулт тодорхой сонсогдсонгүй. Товчоо дарж байгаад ахин тод асууна уу."}), 400
 
     feedback_keywords = ["санал", "гомдол", "хүсэлт", "гомдолтой", "хүсэж байна", "шүүмж"]
     if any(keyword in question_text.lower() for keyword in feedback_keywords):
