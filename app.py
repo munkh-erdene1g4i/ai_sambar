@@ -3,13 +3,13 @@ import datetime
 import io
 import os
 import time
+import threading
 import edge_tts
 import pandas as pd
 import requests
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request, send_file
 
-# .env файлд байгаа орчны хувьсагчдыг уншиж санамжинд ачаална
 load_dotenv()
 
 app = Flask(__name__)
@@ -21,20 +21,16 @@ CHIMEGE_TOKEN = os.environ.get("CHIMEGE_TOKEN", "")
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
 GOOGLE_DOC_WEBHOOK_URL = os.environ.get("GOOGLE_DOC_WEBHOOK_URL", "")
 
-# Google Sheet URL болон сургуулийн ерөнхий мэдээллийн файл
 SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQQqpigfilNtgTowUFvZS3zn6QwUX0eb3IHdQV-of1-j4BJVycqCUWMvo9u8N6AcEwAi3g7pjTjfP6p/pubhtml"
 DATA_FILE = "school_data.txt"
 
-# Санамжинд кэшлэх хувьсагчид
 SCHEDULE_DF = None
 LAST_FETCH_TIME = None
 
-# Beacon мэдээлэл хянах глобал хувьсагчид
-teacher_cooldowns = {}  # MAC хаяг -> сүүлд мэндчилсэн хугацаа
-pending_greetings = []  # Вэб рүү очоогүй байгаа мэндчилгээний жагсаалт
-COOLDOWN_SECONDS = 60  # Нэг багшид 1 минутад зөвхөн 1 удаа л мэндчилнэ
+teacher_cooldowns = {}
+pending_greetings = []
+COOLDOWN_SECONDS = 60
 
-# BLE Төлөв хянах хувьсагч
 last_ble_ping = 0
 
 
@@ -42,26 +38,18 @@ last_ble_ping = 0
 # 2. МЭДЭЭЛЭЛ БОЛОН САНАЛ ХҮСЭЛТИЙН ФУНКЦҮҮД
 # ---------------------------------------------------------
 def send_to_google_doc(feedback_text):
-    """Санал, хүсэлтийг Google Doc руу Webhook ашиглан илгээнэ."""
     if not GOOGLE_DOC_WEBHOOK_URL:
-        print("⚠️ GOOGLE_DOC_WEBHOOK_URL тохируулаагүй байна.")
         return False
-
     try:
         payload = {"feedback": feedback_text}
         res = requests.post(GOOGLE_DOC_WEBHOOK_URL, json=payload, timeout=10)
-        if res.status_code == 200:
-            print("✅ Дэлгэрэнгүй санал хүсэлт Google Doc дээр хадгалагдлаа.")
-            return True
-        else:
-            print(f"❌ Google Doc рүү явуулахад алдаа заалаа: {res.status_code}")
+        return res.status_code == 200
     except Exception as e:
-        print(f"❌ Google Doc рүү явуулахад алдаа гарлаа: {e}")
+        print(f"❌ Google Doc алдаа: {e}")
     return False
 
 
 def clean_sheet_url(url):
-    """pubhtml холбоосыг CSV татах форматын холбоос руу хөрвүүлнэ."""
     if "pubhtml" in url:
         return url.replace("pubhtml", "pub?output=csv")
     if "/pub?" in url and "output=csv" not in url:
@@ -70,7 +58,6 @@ def clean_sheet_url(url):
 
 
 def sync_schedule_data():
-    """15 минут тутамд Google Sheet-ээс хуваарийг шинэчлэн татна."""
     global SCHEDULE_DF, LAST_FETCH_TIME
     now = datetime.datetime.now()
 
@@ -91,18 +78,14 @@ def sync_schedule_data():
             df.columns = df.columns.str.strip()
             SCHEDULE_DF = df
             LAST_FETCH_TIME = now
-            print("✅ Хичээлийн хуваарь амжилттай татагдлаа.")
             return SCHEDULE_DF
-        else:
-            print(f"❌ Google Sheet холболтын алдаа: status {res.status_code}")
     except Exception as e:
-        print(f"❌ Google Sheet татахад алдаа гарлаа: {e}")
+        print(f"❌ Google Sheet алдаа: {e}")
 
     return SCHEDULE_DF
 
 
 def get_school_general_info():
-    """Сургуулийн ерөнхий мэдээллийг файлаас уншина."""
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE, "r", encoding="utf-8") as f:
             content = f.read().strip()
@@ -112,7 +95,6 @@ def get_school_general_info():
 
 
 def build_smart_context(user_question, current_day, current_time):
-    """Хэрэглэгчийн асуултад тохирох контекст мэдээллийг бэлтгэнэ."""
     df = sync_schedule_data()
     general_info = get_school_general_info()
 
@@ -121,10 +103,7 @@ def build_smart_context(user_question, current_day, current_time):
 
     if df is not None and not df.empty:
         context_text += "--- ХИЧЭЭЛИЙН ХУВААРИЙН МЭДЭЭЛЭЛ ---\n"
-
-        teacher_col = next(
-            (col for col in df.columns if "багш" in col.lower()), None
-        )
+        teacher_col = next((col for col in df.columns if "багш" in col.lower()), None)
         teacher_match = False
 
         if teacher_col:
@@ -154,7 +133,6 @@ def build_smart_context(user_question, current_day, current_time):
 # 3. OPENROUTER AI ХЭСЭГ
 # ---------------------------------------------------------
 def generate_ai_response(user_question, context_text, current_day, current_time):
-    """OpenRouter API-аар дамжуулан AI хариулт авна."""
     if not OPENROUTER_API_KEY:
         return "Алдаа: OPENROUTER_API_KEY олдсонгүй. .env файлаа шалгана уу."
 
@@ -215,9 +193,23 @@ def generate_ai_response(user_question, context_text, current_day, current_time)
 # 4. FLASK ROUTE БОЛОН АУДИО МЭДЭЭЛЭЛ
 # ---------------------------------------------------------
 async def text_to_speech_edge(text, output_file):
-    """Edge TTS ашиглан текстийг монгол дуу хоолой болгоно."""
     communicate = edge_tts.Communicate(text, "mn-MN-YesuiNeural")
     await communicate.save(output_file)
+
+
+def generate_beacon_tts_async(greeting_text, audio_path, mac, now):
+    """Beacon-ийн дууг арын фоноор үүсгэж сэрвэр гацахаас сэргийлнэ."""
+    try:
+        asyncio.run(text_to_speech_edge(greeting_text, audio_path))
+        clean_mac = mac.replace(":", "")
+        pending_greetings.append({
+            "text": greeting_text,
+            "audio_url": f"/static/greeting_{clean_mac}.mp3?t={int(now)}",
+            "timestamp": now,
+        })
+        print(f"📢 [Beacon] Мэндчилгээ бэлэн боллоо: {greeting_text}")
+    except Exception as e:
+        print(f"❌ Beacon TTS алдаа: {e}")
 
 
 @app.route("/")
@@ -231,10 +223,7 @@ def manage_school_data():
         data = request.json.get("data", "")
         with open(DATA_FILE, "w", encoding="utf-8") as f:
             f.write(data)
-        return jsonify({
-            "status": "success",
-            "message": "Ерөнхий мэдээлэл амжилттай хадгалагдлаа!",
-        })
+        return jsonify({"status": "success", "message": "Мэдээлэл хадгалагдлаа!"})
 
     context = get_school_general_info()
     return jsonify({"data": context})
@@ -248,14 +237,8 @@ def process_voice():
         audio_file = request.files["audio"]
         audio_data = audio_file.read()
 
-        # Chimege API доод тал нь 2KB (2048 байт) шаарддаг тул шалгана
-        if len(audio_data) < 2048:
-            return (
-                jsonify({
-                    "error": "Аудио файл хэт богино байна. Товчлуурыг дарангаа арай урт, тод ярина уу!"
-                }),
-                400,
-            )
+        if len(audio_data) < 1000:
+            return jsonify({"error": "Аудио файл хэт богино байна. Товчлуурыг дарангаа арай урт, тод ярина уу!"}), 400
 
         stt_url = "https://api.chimege.com/v1.2/transcribe"
         stt_headers = {
@@ -266,9 +249,7 @@ def process_voice():
         }
 
         try:
-            stt_res = requests.post(
-                stt_url, data=audio_data, headers=stt_headers, timeout=15
-            )
+            stt_res = requests.post(stt_url, data=audio_data, headers=stt_headers, timeout=15)
             stt_res.encoding = "utf-8"
             if stt_res.status_code == 200:
                 try:
@@ -277,33 +258,19 @@ def process_voice():
                 except Exception:
                     question_text = stt_res.text.strip()
             else:
-                return (
-                    jsonify({
-                        "error": f"Chimege STT алдаа [{stt_res.status_code}]: {stt_res.text}"
-                    }),
-                    400,
-                )
+                return jsonify({"error": f"Chimege STT алдаа [{stt_res.status_code}]: {stt_res.text}"}), 400
         except Exception as e:
-            return (
-                jsonify({"error": f"Chimege STT холболтын алдаа: {str(e)}"}),
-                500,
-            )
+            return jsonify({"error": f"Chimege STT холболтын алдаа: {str(e)}"}), 500
 
     elif request.json and "text" in request.json:
         question_text = request.json.get("text", "").strip()
 
     if not question_text:
-        return (
-            jsonify({
-                "error": "Асуулт ойлгогдсонгүй. Товчоо дарж байгаад дахин асууна уу."
-            }),
-            400,
-        )
+        return jsonify({"error": "Асуулт ойлгогдсонгүй. Товчоо дарж байгаад дахин асууна уу."}), 400
 
     feedback_keywords = ["санал", "гомдол", "хүсэлт", "гомдолтой", "хүсэж байна", "шүүмж"]
     if any(keyword in question_text.lower() for keyword in feedback_keywords):
-        detailed_feedback = f"Хэрэглэгчийн хэлсэн санал/хүсэлт: \"{question_text}\""
-        send_to_google_doc(detailed_feedback)
+        send_to_google_doc(f"Хэрэглэгчийн санал/хүсэлт: \"{question_text}\"")
 
     tz_mn = datetime.timezone(datetime.timedelta(hours=8))
     now = datetime.datetime.now(tz_mn)
@@ -314,9 +281,7 @@ def process_voice():
     context_text = build_smart_context(question_text, current_day, current_time)
 
     try:
-        ai_answer = generate_ai_response(
-            question_text, context_text, current_day, current_time
-        )
+        ai_answer = generate_ai_response(question_text, context_text, current_day, current_time)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -347,17 +312,19 @@ def get_audio():
 
 
 # ---------------------------------------------------------
-# 5. ESP32 BEACON PRESENCE & BLE STATUS API ROUTE-УУД
+# 5. ESP32 BEACON & BLE ROUTES
 # ---------------------------------------------------------
 @app.route("/api/beacon-presence", methods=["POST"])
 def handle_beacon():
-    """ESP32-оос ирсэн багшийн Beacon датаг хүлээн авна."""
     global last_ble_ping
     last_ble_ping = time.time()
 
     data = request.json or {}
     teacher_name = data.get("teacher", "Багш")
     mac = data.get("mac", "").lower()
+
+    if not mac:
+        return jsonify({"status": "ignored"}), 400
 
     now = time.time()
     last_seen = teacher_cooldowns.get(mac, 0)
@@ -371,28 +338,20 @@ def handle_beacon():
         audio_filename = f"greeting_{clean_mac}.mp3"
         audio_path = os.path.join("static", audio_filename)
 
-        try:
-            asyncio.run(text_to_speech_edge(greeting_text, audio_path))
+        # Thread ашиглан арын фоноор уншуулна
+        threading.Thread(
+            target=generate_beacon_tts_async,
+            args=(greeting_text, audio_path, mac, now),
+            daemon=True
+        ).start()
 
-            pending_greetings.append(
-                {
-                    "text": greeting_text,
-                    "audio_url": f"/static/{audio_filename}?t={int(now)}",
-                    "timestamp": now,
-                }
-            )
-            print(f"📢 [Beacon] Мэндчилгээ үүсгэлээ: {greeting_text}")
-            return jsonify({"status": "success", "message": greeting_text})
-        except Exception as e:
-            print(f"❌ Beacon TTS алдаа: {e}")
-            return jsonify({"error": str(e)}), 500
+        return jsonify({"status": "success", "message": greeting_text})
 
     return jsonify({"status": "ignored", "reason": "cooldown_active"})
 
 
 @app.route("/api/ble-ping", methods=["POST"])
 def ble_ping():
-    """ESP32 идэвхтэй байгааг илтгэх Heartbeat API."""
     global last_ble_ping
     last_ble_ping = time.time()
     return jsonify({"status": "pong"})
@@ -400,17 +359,14 @@ def ble_ping():
 
 @app.route("/api/ble-status", methods=["GET"])
 def get_ble_status():
-    """Вэб браузер BLE төхөөрөмжийн холболтын төлөвийг шалгах API."""
     global last_ble_ping
-    is_connected = (time.time() - last_ble_ping) < 15
+    is_connected = (time.time() - last_ble_ping) < 20
     return jsonify({"connected": is_connected})
 
 
 @app.route("/api/get-greeting", methods=["GET"])
 def get_greeting():
-    """Вэб браузер идэвхтэй мэндчилгээ байгаа эсэхийг шалгана."""
     now = time.time()
-    # 30 секундээс хуучин мэндчилгээг цэвэрлэнэ
     while pending_greetings and (now - pending_greetings[0].get("timestamp", now) > 30):
         pending_greetings.pop(0)
 
@@ -426,4 +382,4 @@ def get_greeting():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port, threaded=True)
