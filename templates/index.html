@@ -489,7 +489,7 @@
         </div>
 
         <div class="reminder-box">
-            <span class="news-badge">📢 БОЛОВСРОЛ & СУРГУУЛИЙН МЭДЭЭ</span>
+            <span class="news-badge">📢 БОЛОВСРОЛ & СУРгуулийн МЭДЭЭ</span>
             <div class="ticker-wrapper">
                 <div class="ticker-text" id="newsTicker">Мэдээлэл уншиж байна...</div>
             </div>
@@ -533,6 +533,7 @@
         let recordStartTime = 0;
         let hideChatTimeout = null;
         let currentBeaconAudio = null;
+        let activePointerId = null;
 
         function isBusy() {
             return isRecording || isProcessing || isSpeaking;
@@ -967,14 +968,11 @@
         }
 
         window.addEventListener('click', (e) => handleButterflyHit(e.clientX, e.clientY));
-        window.addEventListener('touchstart', (e) => {
-            if (e.touches.length > 0) handleButterflyHit(e.touches[0].clientX, e.touches[0].clientY);
-        }, { passive: true });
 
         function animateCanvas() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            const isSpeaking = orbContainer.classList.contains('speaking');
-            const speedMultiplier = isSpeaking ? 2.8 : 1.0;
+            const isSpeakingState = orbContainer.classList.contains('speaking');
+            const speedMultiplier = isSpeakingState ? 2.8 : 1.0;
 
             ctx.strokeStyle = 'rgba(0, 180, 255, 0.14)'; ctx.lineWidth = 1.2;
             ctx.beginPath();
@@ -1068,10 +1066,9 @@
 
                 mediaRecorder.onstop = async () => {
                     const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
-                    
                     const recordDuration = Date.now() - recordStartTime;
-                    // Хэрэв бичлэг 0.5 секундээс богино эсвэл 2KB (2048 байт)-аас бага бол сервер рүү илгээхгүй
-                    if (recordDuration < 500 || audioBlob.size < 2048) {
+                    
+                    if (recordDuration < 400 || audioBlob.size < 1000) {
                         statusText.innerText = "⚠️ Яриа хэт богино байна. Товчлуурыг дарангаа арай урт, тод яриарай!";
                         isProcessing = false;
                         return;
@@ -1090,7 +1087,7 @@
                 statusText.innerHTML = "🔴 Сонсож байна... (Ярьж дуусаад товчоо тавина уу)";
             } catch (err) {
                 console.error("Микрофон алдаа:", err);
-                statusText.innerHTML = "⚠️ Микрофон хаалттай байна!";
+                statusText.innerHTML = "⚠️️ Микрофон хаалттай байна!";
                 isRecording = false;
             }
         }
@@ -1153,48 +1150,48 @@
             }
         }
 
-        let isMouseDown = false;
-
-        orbContainer.addEventListener('touchstart', (e) => { 
-            e.preventDefault(); 
-            startRecording(); 
-        }, { passive: false });
-
-        orbContainer.addEventListener('touchend', (e) => { 
-            e.preventDefault(); 
-            stopRecording(); 
-        }, { passive: false });
-
-        orbContainer.addEventListener('mousedown', (e) => {
-            if (e.button !== 0) return;
-            isMouseDown = true;
+        // Pointer Events (Touch, Mouse, Pen бүгдийг зөв барьж тасрахаас сэргийлнэ)
+        orbContainer.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            if (activePointerId !== null) return;
+            activePointerId = e.pointerId;
+            try { orbContainer.setPointerCapture(e.pointerId); } catch(err){}
             startRecording();
         });
 
-        orbContainer.addEventListener('mouseup', () => {
-            if (isMouseDown) {
-                isMouseDown = false;
+        orbContainer.addEventListener('pointerup', (e) => {
+            e.preventDefault();
+            if (e.pointerId === activePointerId) {
+                try { orbContainer.releasePointerCapture(e.pointerId); } catch(err){}
+                activePointerId = null;
                 stopRecording();
             }
         });
 
-        orbContainer.addEventListener('mouseleave', () => {
-            if (isMouseDown) {
-                isMouseDown = false;
+        orbContainer.addEventListener('pointercancel', (e) => {
+            e.preventDefault();
+            if (e.pointerId === activePointerId) {
+                try { orbContainer.releasePointerCapture(e.pointerId); } catch(err){}
+                activePointerId = null;
                 stopRecording();
             }
         });
 
+        let isSpacePressed = false;
         window.addEventListener('keydown', (e) => {
             if (e.code === 'Space' && !e.repeat && document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
                 e.preventDefault();
-                startRecording();
+                if (!isSpacePressed) {
+                    isSpacePressed = true;
+                    startRecording();
+                }
             }
         });
 
         window.addEventListener('keyup', (e) => {
             if (e.code === 'Space' && document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
                 e.preventDefault();
+                isSpacePressed = false;
                 stopRecording();
             }
         });
@@ -1245,7 +1242,7 @@
             }
         }
 
-        setInterval(checkBleStatus, 3000);
+        setInterval(checkBleStatus, 5000);
         checkBleStatus();
 
         async function checkBeaconGreeting() {
@@ -1269,7 +1266,6 @@
                     currentBeaconAudio = new Audio(data.audio_url);
                     
                     currentBeaconAudio.play().catch(err => {
-                        console.log("Autoplay хязгаарлагдсан байна.");
                         isSpeaking = false;
                         orbContainer.classList.remove('speaking');
                     });
@@ -1286,7 +1282,7 @@
             }
         }
 
-        setInterval(checkBeaconGreeting, 1500);
+        setInterval(checkBeaconGreeting, 3000);
     </script>
 </body>
 </html>
