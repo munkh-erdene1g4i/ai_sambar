@@ -248,11 +248,11 @@ def process_voice():
         audio_file = request.files["audio"]
         audio_data = audio_file.read()
 
-        # 💡 Аудио файлын доод хязгаарыг 3000 байт болгож өсгөсөн (WebM header (~1.5KB) + бодит яриа)
-        if len(audio_data) < 3000:
+        # Аудио файлын хэмжээний доод хязгаарыг 200 байт болгож багасгав
+        if len(audio_data) < 200:
             return (
                 jsonify({
-                    "error": "Аудио хэт богино байна. Товчлуурыг дарангаа яриагаа гүйцэд хэлнэ үү!"
+                    "error": "Аудио хэт богино байна. Товчлуурыг дарангаа бүтэн ярина уу!"
                 }),
                 400,
             )
@@ -276,13 +276,6 @@ def process_voice():
                     question_text = res_json.get("text", stt_res.text).strip()
                 except Exception:
                     question_text = stt_res.text.strip()
-            elif stt_res.status_code == 400:
-                return (
-                    jsonify({
-                        "error": "Яриа хэт богино эсвэл ойлгомжгүй байна. Дахин тод ярина уу."
-                    }),
-                    400,
-                )
             else:
                 return (
                     jsonify({
@@ -385,6 +378,7 @@ def handle_beacon():
                 {
                     "text": greeting_text,
                     "audio_url": f"/static/{audio_filename}?t={int(now)}",
+                    "timestamp": now,
                 }
             )
             print(f"📢 [Beacon] Мэндчилгээ үүсгэлээ: {greeting_text}")
@@ -415,9 +409,18 @@ def get_ble_status():
 @app.route("/api/get-greeting", methods=["GET"])
 def get_greeting():
     """Вэб браузер идэвхтэй мэндчилгээ байгаа эсэхийг шалгана."""
+    now = time.time()
+    # 30 секундээс хуучин мэндчилгээг цэвэрлэнэ
+    while pending_greetings and (now - pending_greetings[0].get("timestamp", now) > 30):
+        pending_greetings.pop(0)
+
     if pending_greetings:
         greeting = pending_greetings.pop(0)
-        return jsonify({"has_greeting": True, **greeting})
+        return jsonify({
+            "has_greeting": True,
+            "text": greeting["text"],
+            "audio_url": greeting["audio_url"],
+        })
     return jsonify({"has_greeting": False})
 
 
