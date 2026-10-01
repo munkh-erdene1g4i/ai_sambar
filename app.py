@@ -3,6 +3,7 @@ import datetime
 import io
 import os
 import time
+import threading
 import edge_tts
 import pandas as pd
 import requests
@@ -25,6 +26,12 @@ DATA_FILE = "school_data.txt"
 
 SCHEDULE_DF = None
 LAST_FETCH_TIME = None
+
+teacher_cooldowns = {}
+pending_greetings = []
+COOLDOWN_SECONDS = 60
+
+last_ble_ping = 0
 
 
 # ---------------------------------------------------------
@@ -190,6 +197,20 @@ async def text_to_speech_edge(text, output_file):
     await communicate.save(output_file)
 
 
+def generate_beacon_tts_async(greeting_text, audio_path, mac, now):
+    try:
+        asyncio.run(text_to_speech_edge(greeting_text, audio_path))
+        clean_mac = mac.replace(":", "")
+        pending_greetings.append({
+            "text": greeting_text,
+            "audio_url": f"/static/greeting_{clean_mac}.mp3?t={int(now)}",
+            "timestamp": now,
+        })
+        print(f"📢 [Beacon] Мэндчилгээ бэлэн боллоо: {greeting_text}")
+    except Exception as e:
+        print(f"❌ Beacon TTS алдаа: {e}")
+
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -215,9 +236,9 @@ def process_voice():
         audio_file = request.files["audio"]
         audio_data = audio_file.read()
 
-        # Шалгуур хэмжээг 500 байт болгож багасгаснаар товч дуу, богино үг асуухад алдаа заахгүй
+        # Алдаанаас сэргийлж хязгаарыг 500 байт болгож багасгав (хоосон файл биш бол зөвшөөрнө)
         if len(audio_data) < 500:
-            return jsonify({"error": "Яриа олдсонгүй эсвэл хэт богино байна. Товчоо дарж байгаад сайн ярина уу!"}), 400
+            return jsonify({"error": "Яриа хэт богино эсвэл сонсогдсонгүй. Товчоо дарж байгаад сайн ярина уу!"}), 400
 
         stt_url = "https://api.chimege.com/v1.2/transcribe"
         stt_headers = {
@@ -279,7 +300,7 @@ def process_voice():
     return jsonify({
         "question": question_text,
         "answer": ai_answer,
-        "audio_url": "/api/audio-response" if has_audio else None,
+        "audio_url": f"/api/audio-response?t={int(time.time())}" if has_audio else None,
     })
 
 
@@ -288,6 +309,74 @@ def get_audio():
     if os.path.exists("response.mp3"):
         return send_file("response.mp3", mimetype="audio/mpeg")
     return jsonify({"error": "Аудио файл олдсонгүй"}), 404
+
+
+# ---------------------------------------------------------
+# 5. ESP32 BEACON & BLE ROUTES
+# ---------------------------------------------------------
+@app.route("/api/beacon-presence", methods=["POST"])
+def handle_beacon():
+    global last_ble_ping
+    last_ble_ping = time.time()
+
+    data = request.json or {}
+    teacher_name = data.get("teacher", "Багш")
+    mac = data.get("mac", "").lower()
+
+    if not mac:
+        return jsonify({"status": "ignored"}), 400
+
+    now = time.time()
+    last_seen = teacher_cooldowns.get(mac, 0)
+
+    if now - last_seen > COOLDOWN_SECONDS:
+        teacher_cooldowns[mac] = now
+        greeting_text = f"{teacher_name} багш аа, тавтай морил!"
+
+        os.makedirs("static", exist_ok=True)
+        clean_mac = mac.replace(":", "")
+        audio_filename = f"greeting_{clean_mac}.mp3"
+        audio_path = os.path.join("static", audio_filename)
+
+        threading.Thread(
+            target=generate_beacon_tts_async,
+            args=(greeting_text, audio_path, mac, now),
+            daemon=True
+        ).start()
+
+        return jsonify({"status": "success", "message": greeting_text})
+
+    return jsonify({"status": "ignored", "reason": "cooldown_active"})
+
+
+@app.route("/api/ble-ping", methods=["POST"])
+def ble_ping():
+    global last_ble_ping
+    last_ble_ping = time.time()
+    return jsonify({"status": "pong"})
+
+
+@app.route("/api/ble-status", methods=["GET"])
+def get_ble_status():
+    global last_ble_ping
+    is_connected = (time.time() - last_ble_ping) < 25
+    return jsonify({"connected": is_connected})
+
+
+@app.route("/api/get-greeting", methods=["GET"])
+def get_greeting():
+    now = time.time()
+    while pending_greetings and (now - pending_greetings[0].get("timestamp", now) > 30):
+        pending_greetings.pop(0)
+
+    if pending_greetings:
+        greeting = pending_greetings.pop(0)
+        return jsonify({
+            "has_greeting": True,
+            "text": greeting["text"],
+            "audio_url": greeting["audio_url"],
+        })
+    return jsonify({"has_greeting": False})
 
 
 if __name__ == "__main__":
