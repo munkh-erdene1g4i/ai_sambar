@@ -482,7 +482,7 @@
             </div>
 
             <div class="weather-box">
-                <div class="weather-icon" id="weatherIcon">☀️</div>
+                <div class="weather-icon" id="weatherIcon">☀️️</div>
                 <div class="weather-info">
                     <div class="city-temp">Зүүнхараа: <span id="weatherTemp">--°C</span></div>
                     <div class="weather-desc" id="weatherDesc">Уншиж байна...</div>
@@ -1054,12 +1054,12 @@
                 };
 
                 mediaRecorder.onstop = async () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                     
-                    // 🛑 Ярьсан хугацаа 1 сек-ээс богино эсвэл хэмжээ нь 5KB-аас бага бол сэрвэр рүү явуулахгүй
+                    // 🛑 Хэт богино даралтыг (0.4 секунд эсвэл 400 байтаас бага) шүүнэ
                     const recordDuration = Date.now() - recordStartTime;
-                    if (recordDuration < 1000 || audioBlob.size < 5000) {
-                        statusText.innerText = "⚠️ Товчоо дарангаа асуултаа бүтэн ярина уу!";
+                    if (recordDuration < 400 || audioBlob.size < 400) {
+                        statusText.innerText = "⚠️ Товчлуурыг дарангаа яриад, ярьж дуусаад тавина уу!";
                         return;
                     }
 
@@ -1067,7 +1067,6 @@
                 };
 
                 recordStartTime = Date.now();
-                // 💡 100ms тутамд датаг цуглуулна
                 mediaRecorder.start(100);
                 isRecording = true;
 
@@ -1082,7 +1081,7 @@
 
         function stopRecording() {
             if (!isRecording) return;
-            isRecording = false; // BLE шалгалт эргэн идэвхжүүлэгдэх боломжтой болно
+            isRecording = false;
             mediaRecorder.stop();
             orbContainer.classList.remove('recording');
             statusText.innerHTML = "⏳ Боловсруулж байна...";
@@ -1090,7 +1089,7 @@
 
         async function sendAudioToServer(audioBlob) {
             const formData = new FormData();
-            formData.append('audio', audioBlob, 'recording.wav');
+            formData.append('audio', audioBlob, 'recording.webm');
 
             try {
                 const response = await fetch('/api/process-voice', {
@@ -1190,7 +1189,6 @@
         checkBleStatus();
 
         async function checkBeaconGreeting() {
-            // 🛑 Ярьж байх үед BLE мэндчилгээ татаж тоглуулахгүй
             if (isRecording) return; 
 
             try {
