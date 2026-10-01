@@ -248,6 +248,15 @@ def process_voice():
         audio_file = request.files["audio"]
         audio_data = audio_file.read()
 
+        # 💡 Ирсэн аудио 2KB-аас бага байвал Chimege рүү явуулахгүй
+        if len(audio_data) < 2000:
+            return (
+                jsonify({
+                    "error": "Аудио файлын хэмжээ хэт бага байна. Асуултаа товчоо дарангаа бүтэн ярина уу!"
+                }),
+                400,
+            )
+
         stt_url = "https://api.chimege.com/v1.2/transcribe"
         stt_headers = {
             "Token": CHIMEGE_TOKEN,
@@ -261,11 +270,19 @@ def process_voice():
                 stt_url, data=audio_data, headers=stt_headers, timeout=15
             )
             stt_res.encoding = "utf-8"
-            try:
-                res_json = stt_res.json()
-                question_text = res_json.get("text", stt_res.text).strip()
-            except Exception:
-                question_text = stt_res.text.strip()
+            if stt_res.status_code == 200:
+                try:
+                    res_json = stt_res.json()
+                    question_text = res_json.get("text", stt_res.text).strip()
+                except Exception:
+                    question_text = stt_res.text.strip()
+            else:
+                return (
+                    jsonify({
+                        "error": f"Chimege STT алдаа [{stt_res.status_code}]: {stt_res.text}"
+                    }),
+                    400,
+                )
         except Exception as e:
             return (
                 jsonify({"error": f"Chimege STT холболтын алдаа: {str(e)}"}),
@@ -306,7 +323,10 @@ def process_voice():
     has_audio = False
     try:
         if os.path.exists("response.mp3"):
-            os.remove("response.mp3")
+            try:
+                os.remove("response.mp3")
+            except Exception:
+                pass  # Файл ашиглагдаж байгаа бол аюулгүй өнгөрөөнө
         asyncio.run(text_to_speech_edge(ai_answer, "response.mp3"))
         has_audio = True
     except Exception as e:
