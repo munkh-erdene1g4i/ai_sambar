@@ -159,6 +159,19 @@
             100% { transform: scale(1.18); box-shadow: 0 0 80px #00f2fe, 0 0 130px #00c6ff; filter: hue-rotate(40deg); }
         }
 
+        /* Интернэт тасарсан үеийн ШАР дугуй болон анимейшн */
+        .orb-container.offline .orb {
+            background: radial-gradient(circle, #facc15 0%, #eab308 100%);
+            box-shadow: 0 0 50px rgba(234, 179, 8, 0.8);
+            animation: offlinePulse 2s infinite ease-in-out;
+        }
+
+        @keyframes offlinePulse {
+            0% { transform: scale(1); box-shadow: 0 0 30px rgba(234, 179, 8, 0.5); }
+            50% { transform: scale(1.04); box-shadow: 0 0 60px rgba(234, 179, 8, 0.9); }
+            100% { transform: scale(1); box-shadow: 0 0 30px rgba(234, 179, 8, 0.5); }
+        }
+
         .orb-container.show-arrow .orb {
             opacity: 0.25;
             transform: scale(0.85);
@@ -199,11 +212,12 @@
         }
 
         .status-text {
-            font-size: 1.2rem;
+            font-size: 1.25rem;
             margin-top: 15px;
             text-align: center;
             color: #e0e0e0;
             min-height: 35px;
+            font-weight: 500;
         }
 
         .key-badge {
@@ -350,9 +364,9 @@
         .reminder-box {
             background: rgba(56, 189, 248, 0.12);
             border-left: 4px solid #38bdf8;
-            padding: 8px 12px;
+            padding: 10px 14px;
             border-radius: 6px;
-            font-size: 0.9rem;
+            font-size: 1.15rem; /* Фонтыг томруулсан */
             color: #f1f5f9;
             display: flex;
             align-items: center;
@@ -365,9 +379,9 @@
             background: #38bdf8;
             color: #0f172a;
             font-weight: 700;
-            padding: 3px 8px;
+            padding: 4px 10px;
             border-radius: 4px;
-            font-size: 0.75rem;
+            font-size: 0.85rem;
             white-space: nowrap;
             flex-shrink: 0;
             box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
@@ -385,6 +399,9 @@
             white-space: nowrap;
             padding-left: 100%;
             animation: marquee 55s linear infinite;
+            font-size: 1.15rem; /* Урсаж буй бичвэрийн фонт хэмжээг томруулсан */
+            font-weight: 500;
+            color: #ffffff;
         }
 
         .ticker-text:hover {
@@ -535,6 +552,28 @@
         let hideChatTimeout = null;
         let currentBeaconAudio = null;
 
+        // ---------------------------------------------------------
+        // ИНТЕРНЭТ ХОЛБОЛТ ШАЛГАХ
+        // ---------------------------------------------------------
+        function checkNetworkStatus() {
+            if (!navigator.onLine) {
+                orbContainer.classList.add('offline');
+                statusText.innerHTML = "⚠️ Интернэт тасарлаа";
+                return false;
+            } else {
+                orbContainer.classList.remove('offline');
+                if (!isRecording && !isProcessing && !isSpeaking) {
+                    statusText.innerHTML = "Дэлгэц дээр эсвэл <span class='key-badge'>SPACE</span> товчлуур дээр дарж яриарай";
+                }
+                return true;
+            }
+        }
+
+        window.addEventListener('online', checkNetworkStatus);
+        window.addEventListener('offline', checkNetworkStatus);
+        setInterval(checkNetworkStatus, 3000);
+        checkNetworkStatus();
+
         async function initMic() {
             if (!micStream) {
                 try {
@@ -587,6 +626,7 @@
         let weatherTipText = "Гадаа нарлаг байна, усаа сайн уугаарай! 🥤";
 
         async function fetchWeather() {
+            if (!navigator.onLine) return;
             try {
                 const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=48.8108&longitude=106.4578&current_weather=true');
                 const data = await response.json();
@@ -602,7 +642,7 @@
                 } else if ([1, 2, 3].includes(code)) {
                     icon = '⛅'; desc = 'Үүлэрхэг'; weatherTipText = 'Гадаа үүлэрхэг байна, дулаан хувцаслаарай! 🧥';
                 } else if ([45, 48].includes(code)) {
-                    icon = '🌫️'; desc = 'Манантай'; weatherTipText = 'Манантай байна, замдаа анхааралтай яваарай! 🌫️';
+                    icon = '🌫️️'; desc = 'Манантай'; weatherTipText = 'Манантай байна, замдаа анхааралтай яваарай! 🌫️';
                 } else if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) {
                     icon = '🌧️'; desc = 'Бороотой'; weatherTipText = 'Бороо орно, шүхрээ мартуузай! ☂️';
                 } else if ([71, 73, 75, 77, 85, 86].includes(code)) {
@@ -1055,6 +1095,7 @@
         }
 
         async function startRecording() {
+            if (!checkNetworkStatus()) return; // Интернэт тасарсан үед бичлэг хийхгүй
             if (isRecording || isProcessing) return;
 
             isRecording = true; 
@@ -1095,7 +1136,6 @@
                         const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
                         const recordDuration = Date.now() - recordStartTime;
                         
-                        // Хязгаарыг 300ms болон 500 байт болгон багасгасан
                         if (recordDuration < 300 || audioBlob.size < 500) {
                             statusText.innerText = "⚠ Яриа хэт богино эсвэл сонсогдсонгүй. Товчлуурыг сайн дарж байгаад ярина уу!";
                             isProcessing = false;
@@ -1164,7 +1204,7 @@
                     isProcessing = false;
                 } else {
                     showChat("🙋 Асуулт: " + data.question, "🤖 Хариулт: " + data.answer);
-                    statusText.innerHTML = "Дэлгэц дээр эсвэл <span class='key-badge'>SPACE</span> товчлуур дээр дарж яриарай";
+                    checkNetworkStatus();
 
                     checkAndShowDirection(data.answer, data.direction);
 
@@ -1190,12 +1230,11 @@
                     }
                 }
             } catch (error) {
-                statusText.innerText = "❌ Холболтын алдаа гарлаа";
+                checkNetworkStatus();
                 isProcessing = false;
             }
         }
 
-        // Pointer/Touch сулрах үед тасалдал үүсгэхгүй байх тохиргоо
         orbContainer.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             startRecording();
@@ -1257,9 +1296,8 @@
             });
         }
 
-        // Ярьж эсвэл бичлэг хийж байхад BLE шалгалт DOM-д нөлөөлөхөөс сэргийлсэн
         async function checkBleStatus() {
-            if (isBusy()) return; 
+            if (isBusy() || !navigator.onLine) return; 
 
             try {
                 const response = await fetch('/api/ble-status');
@@ -1283,7 +1321,7 @@
         setInterval(checkBleStatus, 5000);
 
         async function checkBeaconGreeting() {
-            if (isBusy()) return; 
+            if (isBusy() || !navigator.onLine) return; 
 
             try {
                 const response = await fetch('/api/get-greeting');
@@ -1311,7 +1349,7 @@
                         isSpeaking = false;
                         currentBeaconAudio = null;
                         orbContainer.classList.remove('speaking');
-                        statusText.innerHTML = "Дэлгэц дээр эсвэл <span class='key-badge'>SPACE</span> товчлуур дээр дарж яриарай";
+                        checkNetworkStatus();
                     };
                 }
             } catch (err) {
