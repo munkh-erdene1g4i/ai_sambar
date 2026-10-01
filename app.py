@@ -237,8 +237,9 @@ def process_voice():
         audio_file = request.files["audio"]
         audio_data = audio_file.read()
 
-        if len(audio_data) < 1000:
-            return jsonify({"error": "Аудио файл хэт богино байна. Товчлуурыг дарангаа арай урт, тод ярина уу!"}), 400
+        # Chimege STT API 2KB шаарддаг тул 2.5KB-аас бага файлыг сэрвэр дээрээс шууд буцаана
+        if len(audio_data) < 2500:
+            return jsonify({"error": "Аудио файл хэт богино байна. Товчлуурыг дарж байгаад арай урт, тод ярина уу!"}), 400
 
         stt_url = "https://api.chimege.com/v1.2/transcribe"
         stt_headers = {
@@ -338,7 +339,6 @@ def handle_beacon():
         audio_filename = f"greeting_{clean_mac}.mp3"
         audio_path = os.path.join("static", audio_filename)
 
-        # Thread ашиглан арын фоноор уншуулна
         threading.Thread(
             target=generate_beacon_tts_async,
             args=(greeting_text, audio_path, mac, now),
@@ -360,7 +360,7 @@ def ble_ping():
 @app.route("/api/ble-status", methods=["GET"])
 def get_ble_status():
     global last_ble_ping
-    is_connected = (time.time() - last_ble_ping) < 20
+    is_connected = (time.time() - last_ble_ping) < 25
     return jsonify({"connected": is_connected})
 
 
