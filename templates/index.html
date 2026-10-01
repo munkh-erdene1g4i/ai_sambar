@@ -534,7 +534,6 @@
         let hideChatTimeout = null;
         let currentBeaconAudio = null;
 
-        // ЯРЬЖ БАЙХ ЭСВЭЛ АИ УНШИЖ БАЙХ ҮЕД BLE ИДЭВХГҮЙ БАЙЛГАХ ШАЛГАЛТ
         function isBusy() {
             return isRecording || isProcessing || isSpeaking;
         }
@@ -1047,7 +1046,6 @@
         async function startRecording() {
             if (isRecording || isProcessing) return;
 
-            // Хэрэв Beacon дуу уншиж байсан бол ярих товч дармагц шууд зогсооно
             if (currentBeaconAudio) {
                 try {
                     currentBeaconAudio.pause();
@@ -1072,8 +1070,9 @@
                     const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
                     
                     const recordDuration = Date.now() - recordStartTime;
-                    if (recordDuration < 250 || audioBlob.size < 200) {
-                        statusText.innerText = "⚠️ Товчлуурыг дарангаа яриад, ярьж дуусаад тавина уу!";
+                    // Хэрэв бичлэг 0.5 секундээс богино эсвэл 2KB (2048 байт)-аас бага бол сервер рүү илгээхгүй
+                    if (recordDuration < 500 || audioBlob.size < 2048) {
+                        statusText.innerText = "⚠️ Яриа хэт богино байна. Товчлуурыг дарангаа арай урт, тод яриарай!";
                         isProcessing = false;
                         return;
                     }
@@ -1119,7 +1118,7 @@
                 const data = await response.json();
 
                 if (data.error) {
-                    statusText.innerText = "❌ Алдаа: " + data.error;
+                    statusText.innerText = "❌ " + data.error;
                     isProcessing = false;
                 } else {
                     showChat("🙋 Асуулт: " + data.question, "🤖 Хариулт: " + data.answer);
@@ -1154,7 +1153,6 @@
             }
         }
 
-        // ТОЧ БОЛОН МУУС ЭВЕНТҮҮДИЙГ ЦЭВЭРЛЭЖ ТОХИРУУЛАХ
         let isMouseDown = false;
 
         orbContainer.addEventListener('touchstart', (e) => { 
@@ -1227,7 +1225,6 @@
         }
 
         async function checkBleStatus() {
-            // Ярьж, боловсруулж, эсвэл хариулт уншиж байвал BLE статус шалгахгүй
             if (isBusy()) return;
 
             try {
@@ -1252,7 +1249,6 @@
         checkBleStatus();
 
         async function checkBeaconGreeting() {
-            // Ярьж, боловсруулж, эсвэл хариулт уншиж байвал Beacon мэндчилгээ татахгүй (FREEZE BLE)
             if (isBusy()) return; 
 
             try {
