@@ -248,11 +248,11 @@ def process_voice():
         audio_file = request.files["audio"]
         audio_data = audio_file.read()
 
-        # 💡 Шахагдсан аудио файлын доод хязгаарыг 400 байт болгож багасгав
-        if len(audio_data) < 400:
+        # 💡 Аудио файлын доод хязгаарыг 3000 байт болгож өсгөсөн (WebM header (~1.5KB) + бодит яриа)
+        if len(audio_data) < 3000:
             return (
                 jsonify({
-                    "error": "Аудио хэт богино байна. Товчлуурыг дарангаа бүтэн ярина уу!"
+                    "error": "Аудио хэт богино байна. Товчлуурыг дарангаа яриагаа гүйцэд хэлнэ үү!"
                 }),
                 400,
             )
@@ -276,6 +276,13 @@ def process_voice():
                     question_text = res_json.get("text", stt_res.text).strip()
                 except Exception:
                     question_text = stt_res.text.strip()
+            elif stt_res.status_code == 400:
+                return (
+                    jsonify({
+                        "error": "Яриа хэт богино эсвэл ойлгомжгүй байна. Дахин тод ярина уу."
+                    }),
+                    400,
+                )
             else:
                 return (
                     jsonify({
@@ -326,7 +333,7 @@ def process_voice():
             try:
                 os.remove("response.mp3")
             except Exception:
-                pass  # Файл ашиглагдаж байгаа бол аюулгүй өнгөрөөнө
+                pass
         asyncio.run(text_to_speech_edge(ai_answer, "response.mp3"))
         has_audio = True
     except Exception as e:
@@ -353,7 +360,7 @@ def get_audio():
 def handle_beacon():
     """ESP32-оос ирсэн багшийн Beacon датаг хүлээн авна."""
     global last_ble_ping
-    last_ble_ping = time.time()  # BLE дохио ирсэн хугацааг хадгална
+    last_ble_ping = time.time()
 
     data = request.json or {}
     teacher_name = data.get("teacher", "Багш")
@@ -362,7 +369,6 @@ def handle_beacon():
     now = time.time()
     last_seen = teacher_cooldowns.get(mac, 0)
 
-    # Cooldown хугацаа дууссан бол шинээр мэндчилгээ үүсгэнэ
     if now - last_seen > COOLDOWN_SECONDS:
         teacher_cooldowns[mac] = now
         greeting_text = f"{teacher_name} багш аа, тавтай морил!"
@@ -402,7 +408,6 @@ def ble_ping():
 def get_ble_status():
     """Вэб браузер BLE төхөөрөмжийн холболтын төлөвийг шалгах API."""
     global last_ble_ping
-    # Сүүлийн 15 секундын дотор ESP32 дохио ирсэн бол Ногоон (True)
     is_connected = (time.time() - last_ble_ping) < 15
     return jsonify({"connected": is_connected})
 
