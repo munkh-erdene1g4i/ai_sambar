@@ -280,7 +280,7 @@
             color: #94a3b8;
         }
 
-        /* 🔴/🟢 BLE ТӨЛӨВ ДЭЛГЭЦИЙН БҮҮР БАРУУН ДООД БУЛАНД */
+        /* BLE ТӨЛӨВ ДЭЛГЭЦИЙН БҮҮР БАРУУН ДООД БУЛАНД */
         .ble-status-box {
             position: fixed;
             bottom: 15px;
@@ -498,7 +498,7 @@
         </div>
     </footer>
 
-    <!-- 🟢/🔴 БҮҮР БАРУУН ДООД БУЛАНД БАЙРЛАСАН BLE ИНДИКАТОР -->
+    <!-- BLE ИНДИКАТОР -->
     <div class="ble-status-box">
         <div class="ble-dot" id="bleDot"></div>
         <span id="bleText">BLE: Холбогдоогүй</span>
@@ -531,6 +531,7 @@
         let mediaRecorder;
         let audioChunks = [];
         let isRecording = false;
+        let recordStartTime = 0;
         let hideChatTimeout = null;
 
         // ТЕКСТИЙГ ДЭЛГЭЦЭНД ХАРУУЛААД 15 СЕКУНТЫН ДАРАА АРИЛГАХ ФУНКЦ
@@ -626,12 +627,10 @@
 
         let currentBatchIndex = 0;
 
-        // 🔄 УРСАЖ БУЙ МЭДЭЭЛЭЛД АРГЫН ТООЛОЛ НЭМЖ ШИНЭЧЛЭХ ФУНКЦ
         function updateNewsTicker() {
             const newsTicker = document.getElementById('newsTicker');
             const currentNewsSet = newsBatches[currentBatchIndex % newsBatches.length];
             
-            // Тухайн өдрийн аргын тооллын мэдээллийг бэлтгэх
             const now = new Date();
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -643,7 +642,7 @@
 
             const allItems = [
                 `🌤️ Цаг агаар: ${weatherTipText}`,
-                solarDateText, // 👈 АРГЫН ТООЛЛЫН МЭДЭЭЛЭЛ НЭМЭГДСЭН
+                solarDateText,
                 ...currentNewsSet
             ];
 
@@ -1048,17 +1047,33 @@
                 mediaRecorder = new MediaRecorder(stream);
                 audioChunks = [];
 
-                mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+                mediaRecorder.ondataavailable = event => {
+                    if (event.data && event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+
                 mediaRecorder.onstop = async () => {
                     const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    
+                    // 🛑 Ярьсан хугацаа 1 сек-ээс богино эсвэл хэмжээ нь 5KB-аас бага бол сэрвэр рүү явуулахгүй
+                    const recordDuration = Date.now() - recordStartTime;
+                    if (recordDuration < 1000 || audioBlob.size < 5000) {
+                        statusText.innerText = "⚠️ Товчоо дарангаа асуултаа бүтэн ярина уу!";
+                        return;
+                    }
+
                     await sendAudioToServer(audioBlob);
                 };
 
-                mediaRecorder.start();
+                recordStartTime = Date.now();
+                // 💡 100ms тутамд датаг цуглуулна
+                mediaRecorder.start(100);
                 isRecording = true;
+
                 resetArrowState();
                 orbContainer.classList.add('recording');
-                statusText.innerHTML = "🔴 Сонсож байна... (Гараа авна уу)";
+                statusText.innerHTML = "🔴 Сонсож байна... (Ярьж дуусаад товчоо тавина уу)";
             } catch (err) {
                 console.error("Микрофон алдаа:", err);
                 statusText.innerHTML = "⚠️ Микрофон хаалттай байна!";
@@ -1067,8 +1082,8 @@
 
         function stopRecording() {
             if (!isRecording) return;
+            isRecording = false; // BLE шалгалт эргэн идэвхжүүлэгдэх боломжтой болно
             mediaRecorder.stop();
-            isRecording = false;
             orbContainer.classList.remove('recording');
             statusText.innerHTML = "⏳ Боловсруулж байна...";
         }
@@ -1175,6 +1190,9 @@
         checkBleStatus();
 
         async function checkBeaconGreeting() {
+            // 🛑 Ярьж байх үед BLE мэндчилгээ татаж тоглуулахгүй
+            if (isRecording) return; 
+
             try {
                 const response = await fetch('/api/get-greeting');
                 const data = await response.json();
