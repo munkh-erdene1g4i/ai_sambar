@@ -15,7 +15,7 @@ load_dotenv()
 app = Flask(__name__)
 
 # ---------------------------------------------------------
-# 1. ТОХИРГОО БОЛОН API ТҮЛХҮҮРҮҮД (.env-ээс авна)
+# 1. ТОХИРГОО БОЛОН API ТҮЛХҮҮРҮҮД
 # ---------------------------------------------------------
 CHIMEGE_TOKEN = os.environ.get("CHIMEGE_TOKEN", "")
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
@@ -198,7 +198,6 @@ async def text_to_speech_edge(text, output_file):
 
 
 def generate_beacon_tts_async(greeting_text, audio_path, mac, now):
-    """Beacon-ийн дууг арын фоноор үүсгэж сэрвэр гацахаас сэргийлнэ."""
     try:
         asyncio.run(text_to_speech_edge(greeting_text, audio_path))
         clean_mac = mac.replace(":", "")
@@ -237,9 +236,9 @@ def process_voice():
         audio_file = request.files["audio"]
         audio_data = audio_file.read()
 
-        # Бага хэмжээтэй аудио ирсэн тохиолдолд
-        if len(audio_data) < 1000:
-            return jsonify({"error": "Аудио файл хэт богино байна. Товчлуурыг сайн дарж байгаад ярина уу!"}), 400
+        # Chimege STT-ийн 2KB хязгаарлалтыг давахаас сэргийлж 2500 байтаас бага бол Chimege рүү явуулахгүй
+        if len(audio_data) < 2500:
+            return jsonify({"error": "Яриа хэт богино эсвэл тасарсан байна (2KB-аас бага). Товчоо дарж байгаад сайн ярина уу!"}), 400
 
         stt_url = "https://api.chimege.com/v1.2/transcribe"
         stt_headers = {
