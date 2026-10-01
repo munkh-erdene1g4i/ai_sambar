@@ -236,9 +236,9 @@ def process_voice():
         audio_file = request.files["audio"]
         audio_data = audio_file.read()
 
-        # Chimege STT-ийн 2KB хязгаарлалтыг давахаас сэргийлж 2500 байтаас бага бол Chimege рүү явуулахгүй
-        if len(audio_data) < 2500:
-            return jsonify({"error": "Яриа хэт богино эсвэл тасарсан байна (2KB-аас бага). Товчоо дарж байгаад сайн ярина уу!"}), 400
+        # Алдаанаас сэргийлж хязгаарыг 500 байт болгож багасгав (хоосон файл биш бол зөвшөөрнө)
+        if len(audio_data) < 500:
+            return jsonify({"error": "Яриа хэт богино эсвэл сонсогдсонгүй. Товчоо дарж байгаад сайн ярина уу!"}), 400
 
         stt_url = "https://api.chimege.com/v1.2/transcribe"
         stt_headers = {
@@ -300,7 +300,7 @@ def process_voice():
     return jsonify({
         "question": question_text,
         "answer": ai_answer,
-        "audio_url": "/api/audio-response" if has_audio else None,
+        "audio_url": f"/api/audio-response?t={int(time.time())}" if has_audio else None,
     })
 
 
