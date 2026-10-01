@@ -248,11 +248,11 @@ def process_voice():
         audio_file = request.files["audio"]
         audio_data = audio_file.read()
 
-        # Аудио файлын хэмжээний доод хязгаарыг 200 байт болгож багасгав
-        if len(audio_data) < 200:
+        # Chimege API доод тал нь 2KB (2048 байт) шаарддаг тул шалгана
+        if len(audio_data) < 2048:
             return (
                 jsonify({
-                    "error": "Аудио хэт богино байна. Товчлуурыг дарангаа бүтэн ярина уу!"
+                    "error": "Аудио файл хэт богино байна. Товчлуурыг дарангаа арай урт, тод ярина уу!"
                 }),
                 400,
             )
