@@ -489,7 +489,7 @@
         </div>
 
         <div class="reminder-box">
-            <span class="news-badge">📢 БОЛОВСРОЛ & СУРгуулийн МЭДЭЭ</span>
+            <span class="news-badge">📢 БОЛОВСРОЛ & СУРГУУЛИЙН МЭДЭЭ</span>
             <div class="ticker-wrapper">
                 <div class="ticker-text" id="newsTicker">Мэдээлэл уншиж байна...</div>
             </div>
@@ -536,7 +536,6 @@
         let currentBeaconAudio = null;
         let activePointerId = null;
 
-        // Микрофоны урсгалыг эрт нээж бэлтгэх
         async function initMic() {
             if (!micStream) {
                 try {
@@ -660,7 +659,7 @@
             const solarDateText = `📅 Аргын тоолол: ${year} оны ${month}-р сарын ${day}-ний өдөр (${dayName} гараг)`;
 
             const allItems = [
-                `🌤️️ Цаг агаар: ${weatherTipText}`,
+                `🌤 Цаг агаар: ${weatherTipText}`,
                 solarDateText,
                 ...currentNewsSet
             ];
@@ -1059,6 +1058,8 @@
         async function startRecording() {
             if (isRecording || isProcessing) return;
 
+            isRecording = true; // Бусад фоне хүсэлтийг шууд зогсоохын тулд эхэнд нь тавина
+
             if (currentBeaconAudio) {
                 try {
                     currentBeaconAudio.pause();
@@ -1090,20 +1091,22 @@
                 };
 
                 mediaRecorder.onstop = async () => {
-                    const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
-                    const recordDuration = Date.now() - recordStartTime;
-                    
-                    if (recordDuration < 800 || audioBlob.size < 2500) {
-                        statusText.innerText = "⚠️ Яриа хэт богино байна. Товчлуурыг дарж байгаад арай урт, тод яриарай!";
-                        isProcessing = false;
-                        return;
-                    }
+                    // Арын буфер бүрэн шахагдах хугацааг 80ms олгоно
+                    setTimeout(async () => {
+                        const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+                        const recordDuration = Date.now() - recordStartTime;
+                        
+                        if (recordDuration < 500 || audioBlob.size < 1000) {
+                            statusText.innerText = "⚠️ Яриа хэт богино байна. Товчлуурыг сайн дарж байгаад арай урт яриарай!";
+                            isProcessing = false;
+                            return;
+                        }
 
-                    await sendAudioToServer(audioBlob);
+                        await sendAudioToServer(audioBlob);
+                    }, 80);
                 };
 
                 recordStartTime = Date.now();
-                isRecording = true;
                 mediaRecorder.start(100);
 
                 resetArrowState();
@@ -1121,11 +1124,25 @@
             if (!isRecording) return;
             isRecording = false;
             isProcessing = true;
+
             if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                mediaRecorder.stop();
+                try {
+                    if (typeof mediaRecorder.requestData === 'function') {
+                        mediaRecorder.requestData(); // Төгсгөлийн дууны өгөгдлийг шахаж авна
+                    }
+                } catch(e){}
+                
+                setTimeout(() => {
+                    try {
+                        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                            mediaRecorder.stop();
+                        }
+                    } catch(e) {}
+                }, 50);
             } else {
                 isProcessing = false;
             }
+
             orbContainer.classList.remove('recording');
             statusText.innerHTML = "⏳ Боловсруулж байна...";
         }
@@ -1177,6 +1194,7 @@
             }
         }
 
+        // Pointer event-үүд дээр яриа тасрахаас сэргийлсэн хамгаалалтууд
         orbContainer.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             if (activePointerId !== null) return;
@@ -1199,7 +1217,15 @@
             if (e.pointerId === activePointerId) {
                 try { orbContainer.releasePointerCapture(e.pointerId); } catch(err){}
                 activePointerId = null;
-                stopRecording();
+                // Тохиолдол бүрт таслахгүйгээр 400ms-ээс богино даралт байвал л тооцохгүй
+                if (Date.now() - recordStartTime > 400) {
+                    stopRecording();
+                } else {
+                    isRecording = false;
+                    isProcessing = false;
+                    orbContainer.classList.remove('recording');
+                    statusText.innerHTML = "Дэлгэц дээр эсвэл <span class='key-badge'>SPACE</span> товчлуур дээр дарж яриарай";
+                }
             }
         });
 
@@ -1247,8 +1273,9 @@
             });
         }
 
+        // Хэрэглэгч ярьж/сонсож байх үед BLE шалгалтыг зогсооно
         async function checkBleStatus() {
-            if (isBusy()) return;
+            if (isBusy()) return; 
 
             try {
                 const response = await fetch('/api/ble-status');
@@ -1269,7 +1296,6 @@
         }
 
         setInterval(checkBleStatus, 5000);
-        checkBleStatus();
 
         async function checkBeaconGreeting() {
             if (isBusy()) return; 
