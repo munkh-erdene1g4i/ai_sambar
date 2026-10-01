@@ -482,7 +482,7 @@
             </div>
 
             <div class="weather-box">
-                <div class="weather-icon" id="weatherIcon">☀️️</div>
+                <div class="weather-icon" id="weatherIcon">☀</div>
                 <div class="weather-info">
                     <div class="city-temp">Зүүнхараа: <span id="weatherTemp">--°C</span></div>
                     <div class="weather-desc" id="weatherDesc">Уншиж байна...</div>
@@ -534,7 +534,6 @@
         let recordStartTime = 0;
         let hideChatTimeout = null;
 
-        // ТЕКСТИЙГ ДЭЛГЭЦЭНД ХАРУУЛААД 15 СЕКУНТЫН ДАРАА АРИЛГАХ ФУНКЦ
         function showChat(question, answer) {
             chatBox.style.display = 'block';
             userQuestion.innerText = question;
@@ -1056,10 +1055,10 @@
                 mediaRecorder.onstop = async () => {
                     const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                     
-                    // 🛑 Хэт богино даралтыг (0.4 секунд эсвэл 400 байтаас бага) шүүнэ
+                    // 🛑 Доод хэмжээг 800ms / 3000 байт болгож засав
                     const recordDuration = Date.now() - recordStartTime;
-                    if (recordDuration < 400 || audioBlob.size < 400) {
-                        statusText.innerText = "⚠️ Товчлуурыг дарангаа яриад, ярьж дуусаад тавина уу!";
+                    if (recordDuration < 800 || audioBlob.size < 3000) {
+                        statusText.innerHTML = "⚠️ Товчлуурыг дарангаа яриад, ярьж дуусаад тавина уу!";
                         return;
                     }
 
@@ -1099,7 +1098,7 @@
                 const data = await response.json();
 
                 if (data.error) {
-                    statusText.innerText = "❌ Алдаа: " + data.error;
+                    statusText.innerText = "❌ " + data.error;
                 } else {
                     showChat("🙋 Асуулт: " + data.question, "🤖 Хариулт: " + data.answer);
                     statusText.innerHTML = "Дэлгэц дээр эсвэл <span class='key-badge'>SPACE</span> товчлуур дээр дарж яриарай";
