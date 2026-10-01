@@ -236,7 +236,6 @@ def process_voice():
         audio_file = request.files["audio"]
         audio_data = audio_file.read()
 
-        # Алдаанаас сэргийлж хязгаарыг 500 байт болгож багасгав (хоосон файл биш бол зөвшөөрнө)
         if len(audio_data) < 500:
             return jsonify({"error": "Яриа хэт богино эсвэл сонсогдсонгүй. Товчоо дарж байгаад сайн ярина уу!"}), 400
 
