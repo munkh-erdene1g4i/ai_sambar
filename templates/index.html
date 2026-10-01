@@ -607,7 +607,7 @@
                 } else if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) {
                     icon = '🌧️'; desc = 'Бороотой'; weatherTipText = 'Бороо орно, шүхрээ мартуузай! ☂️';
                 } else if ([71, 73, 75, 77, 85, 86].includes(code)) {
-                    icon = '❄️'; desc = 'Цас орж байна'; weatherTipText = 'Гадаа цастай байна, дулаан хувцаслаарай! 🧣';
+                    icon = '❄️️'; desc = 'Цас орж байна'; weatherTipText = 'Гадаа цастай байна, дулаан хувцаслаарай! 🧣';
                 } else if ([95, 96, 99].includes(code)) {
                     icon = '⛈️'; desc = 'Аянгатай бороо'; weatherTipText = 'Аянга цахилгаантай, аюулгүй байдлаа хангаарай! ⚡';
                 }
@@ -620,7 +620,7 @@
             } catch (err) {
                 document.getElementById('weatherTemp').innerText = '18°C';
                 document.getElementById('weatherDesc').innerText = 'Цэлмэг';
-                document.getElementById('weatherIcon').innerText = '☀️';
+                document.getElementById('weatherIcon').innerText = '☀️️';
                 updateNewsTicker();
             }
         }
@@ -1058,8 +1058,9 @@
         async function startRecording() {
             if (isRecording || isProcessing) return;
 
-            isRecording = true; // Бусад фоне хүсэлтийг шууд зогсоохын тулд эхэнд нь тавина
+            isRecording = true; 
 
+            // Beacon-ийн ярьж буй дууг дарах
             if (currentBeaconAudio) {
                 try {
                     currentBeaconAudio.pause();
@@ -1091,19 +1092,20 @@
                 };
 
                 mediaRecorder.onstop = async () => {
-                    // Арын буфер бүрэн шахагдах хугацааг 80ms олгоно
                     setTimeout(async () => {
                         const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
                         const recordDuration = Date.now() - recordStartTime;
                         
-                        if (recordDuration < 500 || audioBlob.size < 1000) {
-                            statusText.innerText = "⚠️ Яриа хэт богино байна. Товчлуурыг сайн дарж байгаад арай урт яриарай!";
+                        // Хэмжээний хатуу шалгалт (2500 байтаас бага бол сервер рүү шидэхгүй)
+                        if (recordDuration < 600 || audioBlob.size < 2500) {
+                            statusText.innerText = "⚠️️ Яриа хэт богино эсвэл тасарсан байна. Товчлуурыг сайн дарж байгаад ярина уу!";
                             isProcessing = false;
+                            orbContainer.classList.remove('recording');
                             return;
                         }
 
                         await sendAudioToServer(audioBlob);
-                    }, 80);
+                    }, 100);
                 };
 
                 recordStartTime = Date.now();
@@ -1128,7 +1130,7 @@
             if (mediaRecorder && mediaRecorder.state !== 'inactive') {
                 try {
                     if (typeof mediaRecorder.requestData === 'function') {
-                        mediaRecorder.requestData(); // Төгсгөлийн дууны өгөгдлийг шахаж авна
+                        mediaRecorder.requestData(); 
                     }
                 } catch(e){}
                 
@@ -1138,7 +1140,7 @@
                             mediaRecorder.stop();
                         }
                     } catch(e) {}
-                }, 50);
+                }, 80);
             } else {
                 isProcessing = false;
             }
@@ -1194,7 +1196,6 @@
             }
         }
 
-        // Pointer event-үүд дээр яриа тасрахаас сэргийлсэн хамгаалалтууд
         orbContainer.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             if (activePointerId !== null) return;
@@ -1212,13 +1213,13 @@
             }
         });
 
+        // Pointercancel дээр шууд таслахгүй, бодит хугацааг шалгана
         orbContainer.addEventListener('pointercancel', (e) => {
             e.preventDefault();
             if (e.pointerId === activePointerId) {
                 try { orbContainer.releasePointerCapture(e.pointerId); } catch(err){}
                 activePointerId = null;
-                // Тохиолдол бүрт таслахгүйгээр 400ms-ээс богино даралт байвал л тооцохгүй
-                if (Date.now() - recordStartTime > 400) {
+                if (Date.now() - recordStartTime > 600) {
                     stopRecording();
                 } else {
                     isRecording = false;
@@ -1273,7 +1274,7 @@
             });
         }
 
-        // Хэрэглэгч ярьж/сонсож байх үед BLE шалгалтыг зогсооно
+        // Ярьж, боловсруулж эсвэл дуу уншиж байх үед BLE шалгалтыг бүрэн зогсооно
         async function checkBleStatus() {
             if (isBusy()) return; 
 
