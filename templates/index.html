@@ -531,9 +531,21 @@
         let mediaRecorder;
         let audioChunks = [];
         let isRecording = false;
+        let isStartingRecording = false;
+        let stopRequested = false;
         let recordStartTime = 0;
         let hideChatTimeout = null;
+        let mediaStream = null;
 
+        // Микрофон урсгалыг саадгүй кэшлэх
+        async function getAudioStream() {
+            if (!mediaStream || !mediaStream.active) {
+                mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            }
+            return mediaStream;
+        }
+
+        // ТЕКСТИЙГ ДЭЛГЭЦЭНД ХАРУУЛААД 15 СЕКУНТЫН ДАРАА АРИЛГАХ ФУНКЦ
         function showChat(question, answer) {
             chatBox.style.display = 'block';
             userQuestion.innerText = question;
@@ -1039,10 +1051,28 @@
             }
         }
 
+        // --- ЗАССАН АУДИО БИЧИХ ЛОГИК ---
         async function startRecording() {
-            if (isRecording) return;
+            if (isRecording || isStartingRecording) return;
+            
+            isStartingRecording = true;
+            stopRequested = false;
+            recordStartTime = Date.now();
+
+            resetArrowState();
+            orbContainer.classList.add('recording');
+            statusText.innerHTML = "🔴 Сонсож байна... (Ярьж дуусаад товчоо тавина уу)";
+
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const stream = await getAudioStream();
+
+                if (stopRequested) {
+                    isStartingRecording = false;
+                    orbContainer.classList.remove('recording');
+                    statusText.innerHTML = "Дэлгэц дээр эсвэл <span class='key-badge'>SPACE</span> товчлуур дээр дарж яриарай";
+                    return;
+                }
+
                 mediaRecorder = new MediaRecorder(stream);
                 audioChunks = [];
 
@@ -1054,34 +1084,40 @@
 
                 mediaRecorder.onstop = async () => {
                     const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                    
-                    // 🛑 Доод хэмжээг 800ms / 3000 байт болгож засав
                     const recordDuration = Date.now() - recordStartTime;
-                    if (recordDuration < 800 || audioBlob.size < 3000) {
-                        statusText.innerHTML = "⚠️ Товчлуурыг дарангаа яриад, ярьж дуусаад тавина уу!";
+
+                    // Хэт богино даралтыг шүүнэ
+                    if (recordDuration < 300 || audioBlob.size < 300) {
+                        statusText.innerText = "⚠️ Товчлуурыг дарангаа яриад, ярьж дуусаад тавина уу!";
                         return;
                     }
 
                     await sendAudioToServer(audioBlob);
                 };
 
-                recordStartTime = Date.now();
                 mediaRecorder.start(100);
                 isRecording = true;
-
-                resetArrowState();
-                orbContainer.classList.add('recording');
-                statusText.innerHTML = "🔴 Сонсож байна... (Ярьж дуусаад товчоо тавина уу)";
+                isStartingRecording = false;
             } catch (err) {
                 console.error("Микрофон алдаа:", err);
+                isStartingRecording = false;
+                isRecording = false;
+                orbContainer.classList.remove('recording');
                 statusText.innerHTML = "⚠️ Микрофон хаалттай байна!";
             }
         }
 
         function stopRecording() {
+            if (isStartingRecording) {
+                stopRequested = true;
+                return;
+            }
             if (!isRecording) return;
+
             isRecording = false;
-            mediaRecorder.stop();
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
             orbContainer.classList.remove('recording');
             statusText.innerHTML = "⏳ Боловсруулж байна...";
         }
@@ -1098,7 +1134,7 @@
                 const data = await response.json();
 
                 if (data.error) {
-                    statusText.innerText = "❌ " + data.error;
+                    statusText.innerText = "❌ Алдаа: " + data.error;
                 } else {
                     showChat("🙋 Асуулт: " + data.question, "🤖 Хариулт: " + data.answer);
                     statusText.innerHTML = "Дэлгэц дээр эсвэл <span class='key-badge'>SPACE</span> товчлуур дээр дарж яриарай";
@@ -1166,7 +1202,10 @@
             });
         }
 
+        // --- BLE ТӨЛӨВ ШАЛГАХ (ЯРЬЖ/БИЧИЖ БАЙХ ВЕ ДАВХЦУУЛАХГҮЙ) ---
         async function checkBleStatus() {
+            if (isRecording || isStartingRecording || orbContainer.classList.contains('speaking')) return;
+
             try {
                 const response = await fetch('/api/ble-status');
                 const data = await response.json();
@@ -1187,8 +1226,9 @@
         setInterval(checkBleStatus, 3000);
         checkBleStatus();
 
+        // --- BEACON МЭНДЧИЛГЭЭ ШАЛГАХ (ЯРЬЖ/БИЧИЖ БАЙХ ВЕ ДАВХЦУУЛАХГҮЙ) ---
         async function checkBeaconGreeting() {
-            if (isRecording) return; 
+            if (isRecording || isStartingRecording || orbContainer.classList.contains('speaking')) return; 
 
             try {
                 const response = await fetch('/api/get-greeting');
