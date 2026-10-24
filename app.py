@@ -4,7 +4,7 @@ import io
 import os
 import time
 import threading
-import uuid  # Файлын нэрийг давхцуулахгүй байх үүднээс нэмэв
+import uuid
 import edge_tts
 import pandas as pd
 import requests
@@ -27,6 +27,9 @@ DATA_FILE = "school_data.txt"
 
 SCHEDULE_DF = None
 LAST_FETCH_TIME = None
+
+# Сургуулийн мэдээллийг RAM санах ойд бэлэн байлгах глобал кэш
+SCHOOL_DATA_CACHE = None
 
 teacher_cooldowns = {}
 pending_greetings = []
@@ -87,11 +90,20 @@ def sync_schedule_data():
 
 
 def get_school_general_info():
+    global SCHOOL_DATA_CACHE
+    if SCHOOL_DATA_CACHE is not None:
+        return SCHOOL_DATA_CACHE
+
     if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "r", encoding="utf-8") as f:
-            content = f.read().strip()
-            if content:
-                return content
+        try:
+            with open(DATA_FILE, "r", encoding="utf-8") as f:
+                content = f.read().strip()
+                if content:
+                    SCHOOL_DATA_CACHE = content
+                    return content
+        except Exception as e:
+            print(f"❌ Файл уншихад алдаа: {e}")
+
     return "Сургуулийн ерөнхий мэдээлэл хараахан оруулаагүй байна."
 
 
@@ -219,10 +231,16 @@ def index():
 
 @app.route("/api/school-data", methods=["GET", "POST"])
 def manage_school_data():
+    global SCHOOL_DATA_CACHE
     if request.method == "POST":
         data = request.json.get("data", "")
-        with open(DATA_FILE, "w", encoding="utf-8") as f:
-            f.write(data)
+        SCHOOL_DATA_CACHE = data  # RAM санах ойд шууд хадгална
+        try:
+            with open(DATA_FILE, "w", encoding="utf-8") as f:
+                f.write(data)
+        except Exception as e:
+            print(f"❌ Файл бичихэд алдаа: {e}")
+            
         return jsonify({"status": "success", "message": "Мэдээлэл хадгалагдлаа!"})
 
     context = get_school_general_info()
@@ -285,7 +303,7 @@ def process_voice():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-    # Файлын нэрийг unique ID-гаар үүсгэснээр сервер дээр түгжигдэхээс сэргийлнэ
+    # Олон хэрэглэгч асуухад эсвэл дараалж ярихад аудио файл давхцахаас сэргийлсэн UUID
     audio_filename = f"response_{uuid.uuid4().hex[:8]}.mp3"
     audio_filepath = os.path.join("static", audio_filename)
 
