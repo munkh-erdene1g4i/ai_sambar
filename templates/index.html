@@ -69,24 +69,28 @@
             -webkit-text-fill-color: transparent;
         }
 
+        /* 🔽 ТОХИРГОО ТОВЧЛУУРЫГ ДӨӨШЛҮҮЛЖ ДООД ЗҮҮН БУЛАНД БАЙРЛУУЛАВ */
         .admin-btn {
-            position: absolute;
-            right: 0;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(0, 242, 254, 0.3);
+            position: fixed;
+            bottom: 20px;
+            left: 25px;
+            z-index: 100;
+            background: rgba(10, 22, 38, 0.85);
+            border: 1px solid rgba(0, 242, 254, 0.35);
             color: #fff;
             padding: 10px 22px;
             font-size: 1.05rem;
-            border-radius: 20px;
+            border-radius: 24px;
             cursor: pointer;
             transition: all 0.3s;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         }
 
         .admin-btn:hover {
-            background: rgba(0, 242, 254, 0.2);
+            background: rgba(0, 242, 254, 0.25);
             border-color: #00f2fe;
-            box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
+            box-shadow: 0 0 18px rgba(0, 242, 254, 0.5);
         }
 
         main {
@@ -468,6 +472,49 @@
             color: #94a3b8;
         }
 
+        /* 🌐 ИНТЕРНЕТ СҮЛЖЭЭНИЙ ЧАНАРЫН ТЭМДЭГТ */
+        .net-status-box {
+            position: fixed;
+            bottom: 20px;
+            right: 230px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(10, 22, 38, 0.85);
+            padding: 10px 18px;
+            border-radius: 24px;
+            border: 1px solid rgba(0, 242, 254, 0.3);
+            font-size: 1rem;
+            color: #e2e8f0;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .net-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background-color: #22c55e;
+            box-shadow: 0 0 12px rgba(34, 197, 94, 0.9);
+            transition: all 0.4s ease;
+        }
+
+        .net-dot.good {
+            background-color: #22c55e;
+            box-shadow: 0 0 12px rgba(34, 197, 94, 0.9);
+        }
+
+        .net-dot.fair {
+            background-color: #eab308;
+            box-shadow: 0 0 12px rgba(234, 179, 8, 0.9);
+        }
+
+        .net-dot.poor {
+            background-color: #ef4444;
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.9);
+        }
+
         .ble-status-box {
             position: fixed;
             bottom: 20px;
@@ -743,11 +790,10 @@
             <img src="/static/logo.png" alt="Сургуулийн Лого" class="school-logo">
             <h1>Сургуулийн Ухаалаг Туслах</h1>
         </div>
-        <button class="admin-btn" onclick="showAuthModal()">⚙️ Тохиргоо</button>
     </header>
 
     <main>
-        <!-- 🚀 HIGH-TECH SCI-FI AI AVATAR (ENLARGED FOR WINDOWS TOUCHSCREEN) -->
+        <!-- 🚀 HIGH-TECH SCI-FI AI AVATAR -->
         <div class="orb-container" id="orbContainer">
             <div class="hud-ring outer-ring"></div>
             <div class="hud-ring inner-ring"></div>
@@ -805,6 +851,16 @@
         </div>
     </footer>
 
+    <!-- ⚙️ ДООШЛУУЛСАН ТОХИРГОО ТОВЧЛУУР (Доод зүүн талд) -->
+    <button class="admin-btn" onclick="showAuthModal()">⚙️ Тохиргоо</button>
+
+    <!-- 🌐 ИНТЕРНЕТ СҮЛЖЭЭНИЙ ЧАНАРЫН БАР -->
+    <div class="net-status-box">
+        <div class="net-dot good" id="netDot"></div>
+        <span id="netText">Сүлжээ: Сайн</span>
+    </div>
+
+    <!-- 📡 BLE МЭДРЭГЧИЙН БАР -->
     <div class="ble-status-box">
         <div class="ble-dot" id="bleDot"></div>
         <span id="bleText">BLE: Холбогдоогүй</span>
@@ -898,6 +954,9 @@
         const bleDot = document.getElementById('bleDot');
         const bleText = document.getElementById('bleText');
 
+        const netDot = document.getElementById('netDot');
+        const netText = document.getElementById('netText');
+
         let micStream = null;
         let mediaRecorder = null;
         let audioChunks = [];
@@ -908,23 +967,56 @@
         let hideChatTimeout = null;
         let currentBeaconAudio = null;
 
-        function checkNetworkStatus() {
+        // 🌐 ИНТЕРНЕТ СҮЛЖЭЭНИЙ ЧАНАРЫГ БОДИТ ХУГАЦААНД ХЭМЖИХ (НОГООН, ШАР, УЛААН)
+        async function measureNetworkQuality() {
             if (!navigator.onLine) {
+                netDot.className = 'net-dot poor';
+                netText.innerText = 'Сүлжээ: Тасарсан';
                 orbContainer.classList.add('offline');
                 statusText.innerHTML = "⚠️ Интернэт тасарлаа";
                 return false;
-            } else {
-                orbContainer.classList.remove('offline');
-                if (!isRecording && !isProcessing && !isSpeaking) {
-                    statusText.innerHTML = "Дэлгэц дээр эсвэл <span class='key-badge'>SPACE</span> товчлуур дээр дарж яриарай";
+            }
+
+            const startTime = performance.now();
+            try {
+                const res = await fetch('/api/ble-status?t=' + Date.now(), { method: 'GET', cache: 'no-store' });
+                const latency = performance.now() - startTime;
+
+                if (res.ok) {
+                    orbContainer.classList.remove('offline');
+                    if (!isRecording && !isProcessing && !isSpeaking) {
+                        statusText.innerHTML = "Дэлгэц дээр эсвэл <span class='key-badge'>SPACE</span> товчлуур дээр дарж яриарай";
+                    }
+
+                    if (latency < 250) {
+                        netDot.className = 'net-dot good';
+                        netText.innerText = `Сүлжээ: Сайн (${Math.round(latency)}ms)`;
+                    } else if (latency < 650) {
+                        netDot.className = 'net-dot fair';
+                        netText.innerText = `Сүлжээ: Дунд (${Math.round(latency)}ms)`;
+                    } else {
+                        netDot.className = 'net-dot poor';
+                        netText.innerText = `Сүлжээ: Муу (${Math.round(latency)}ms)`;
+                    }
+                    return true;
+                } else {
+                    netDot.className = 'net-dot poor';
+                    netText.innerText = 'Сүлжээ: Алдаатай';
+                    return false;
                 }
-                return true;
+            } catch (err) {
+                netDot.className = 'net-dot poor';
+                netText.innerText = 'Сүлжээ: Тасарсан';
+                orbContainer.classList.add('offline');
+                statusText.innerHTML = "⚠️ Интернэт тасарлаа";
+                return false;
             }
         }
 
-        window.addEventListener('online', checkNetworkStatus);
-        window.addEventListener('offline', checkNetworkStatus);
-        setInterval(checkNetworkStatus, 3000);
+        window.addEventListener('online', measureNetworkQuality);
+        window.addEventListener('offline', measureNetworkQuality);
+        setInterval(measureNetworkQuality, 4000);
+        measureNetworkQuality();
 
         async function initMic() {
             if (!micStream) {
@@ -1447,7 +1539,7 @@
         }
 
         async function startRecording() {
-            if (!checkNetworkStatus()) return;
+            if (!navigator.onLine) return;
             if (isRecording || isProcessing) return;
 
             isRecording = true; 
@@ -1555,7 +1647,6 @@
                     isProcessing = false;
                 } else {
                     showChat("🙋 Асуулт: " + data.question, "🤖 Хариулт: " + data.answer);
-                    checkNetworkStatus();
 
                     checkAndShowDirection(data.answer, data.direction);
 
@@ -1585,7 +1676,6 @@
                     }
                 }
             } catch (error) {
-                checkNetworkStatus();
                 isProcessing = false;
             }
         }
@@ -1758,7 +1848,6 @@
                         isSpeaking = false;
                         currentBeaconAudio = null;
                         orbContainer.classList.remove('speaking');
-                        checkNetworkStatus();
                     };
                 }
             } catch (err) {
