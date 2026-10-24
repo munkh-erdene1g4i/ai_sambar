@@ -1673,11 +1673,6 @@
                 } else {
                     showChat("🙋 Асуулт: " + data.question, "🤖 Хариулт: " + data.answer);
 
-                    // 🎬 Сургуулийн танилцуулга бичлэг олдсон бол тоглуулах
-                    if (data.video_url) {
-                        playIntroVideo(data.video_url);
-                    }
-
                     checkAndShowDirection(data.answer, data.direction);
 
                     if (data.audio_url) {
@@ -1693,16 +1688,30 @@
                             console.error("⚠️ Аудио тоглуулах боломжгүй байна:", e);
                             isSpeaking = false;
                             orbContainer.classList.remove('speaking');
+                            
+                            // Хэрэв аудио тогтож чадахгүй бол видеог шууд тоглуулна
+                            if (data.video_url) {
+                                playIntroVideo(data.video_url);
+                            }
                         });
 
                         audio.onended = () => {
                             isSpeaking = false;
                             orbContainer.classList.remove('speaking');
                             resetArrowState();
+
+                            // 🎬 АИ ЯРЬЖ ДУУССАНЫ ДАРАА ВИДЕОГ ТОГЛУУЛНА (Дуу давхардахаас сэргийлсэн)
+                            if (data.video_url) {
+                                playIntroVideo(data.video_url);
+                            }
                         };
                     } else {
                         isProcessing = false;
-                        setTimeout(resetArrowState, 8000);
+                        if (data.video_url) {
+                            playIntroVideo(data.video_url);
+                        } else {
+                            setTimeout(resetArrowState, 8000);
+                        }
                     }
                 }
             } catch (error) {
