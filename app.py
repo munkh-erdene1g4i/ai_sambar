@@ -91,9 +91,17 @@ def sync_schedule_data():
 
 def get_school_general_info():
     global SCHOOL_DATA_CACHE
+    # 1. Вэб дээрээс засаж хадгалсан бол RAM-д байгаа кэшийг эхэнд нь уншина
     if SCHOOL_DATA_CACHE is not None:
         return SCHOOL_DATA_CACHE
 
+    # 2. Render-ийн Environment Variable (SCHOOL_GENERAL_INFO)-аас уншина
+    env_info = os.environ.get("SCHOOL_GENERAL_INFO", "").strip()
+    if env_info:
+        SCHOOL_DATA_CACHE = env_info
+        return env_info
+
+    # 3. Хэрэв орчны хувьсагч байхгүй бол файлаас уншина
     if os.path.exists(DATA_FILE):
         try:
             with open(DATA_FILE, "r", encoding="utf-8") as f:
@@ -303,7 +311,6 @@ def process_voice():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-    # Олон хэрэглэгч асуухад эсвэл дараалж ярихад аудио файл давхцахаас сэргийлсэн UUID
     audio_filename = f"response_{uuid.uuid4().hex[:8]}.mp3"
     audio_filepath = os.path.join("static", audio_filename)
 
