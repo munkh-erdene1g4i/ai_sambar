@@ -4,6 +4,7 @@ import io
 import os
 import time
 import threading
+import uuid  # Файлын нэрийг давхцуулахгүй байх үүднээс нэмэв
 import edge_tts
 import pandas as pd
 import requests
@@ -284,22 +285,22 @@ def process_voice():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+    # Файлын нэрийг unique ID-гаар үүсгэснээр сервер дээр түгжигдэхээс сэргийлнэ
+    audio_filename = f"response_{uuid.uuid4().hex[:8]}.mp3"
+    audio_filepath = os.path.join("static", audio_filename)
+
     has_audio = False
     try:
-        if os.path.exists("response.mp3"):
-            try:
-                os.remove("response.mp3")
-            except Exception:
-                pass
-        asyncio.run(text_to_speech_edge(ai_answer, "response.mp3"))
+        os.makedirs("static", exist_ok=True)
+        asyncio.run(text_to_speech_edge(ai_answer, audio_filepath))
         has_audio = True
     except Exception as e:
-        print(f"TTS Алдаа: {e}")
+        print(f"❌ TTS Алдаа гарлаа: {e}")
 
     return jsonify({
         "question": question_text,
         "answer": ai_answer,
-        "audio_url": f"/api/audio-response?t={int(time.time())}" if has_audio else None,
+        "audio_url": f"/static/{audio_filename}" if has_audio else None,
     })
 
 
