@@ -22,7 +22,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: space-between;
-            padding: 20px;
+            padding: 24px;
             overflow-x: hidden;
             position: relative;
         }
@@ -42,7 +42,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            max-width: 900px;
+            max-width: 1100px;
             position: relative;
             z-index: 1;
         }
@@ -50,19 +50,19 @@
         .header-title-box {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 16px;
         }
 
         .school-logo {
-            width: 48px;
-            height: 48px;
+            width: 58px;
+            height: 58px;
             object-fit: contain;
-            filter: drop-shadow(0 0 10px rgba(0, 242, 254, 0.6));
+            filter: drop-shadow(0 0 12px rgba(0, 242, 254, 0.6));
         }
 
         h1 {
-            font-size: 1.8rem;
-            font-weight: 600;
+            font-size: 2.3rem;
+            font-weight: 700;
             letter-spacing: 0.5px;
             background: linear-gradient(90deg, #ffffff, #00f2fe);
             -webkit-background-clip: text;
@@ -75,7 +75,8 @@
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(0, 242, 254, 0.3);
             color: #fff;
-            padding: 8px 18px;
+            padding: 10px 22px;
+            font-size: 1.05rem;
             border-radius: 20px;
             cursor: pointer;
             transition: all 0.3s;
@@ -94,17 +95,17 @@
             align-items: center;
             justify-content: center;
             width: 100%;
-            max-width: 800px;
+            max-width: 1000px;
             flex: 1;
             position: relative;
             z-index: 10;
         }
 
-        /* 🚀 ULTRA-FUTURISTIC HIGH-TECH AI AVATAR */
+        /* 🚀 ULTRA-LARGE HIGH-TECH AI AVATAR FOR LARGE TOUCHSCREEN */
         .orb-container {
-            width: 300px;
-            height: 300px;
-            margin: 10px auto;
+            width: 480px;
+            height: 480px;
+            margin: 20px auto;
             position: relative;
             display: flex;
             justify-content: center;
@@ -123,18 +124,18 @@
         }
 
         .hud-ring.outer-ring {
-            width: 290px;
-            height: 290px;
-            border: 2px dashed rgba(0, 242, 254, 0.35);
+            width: 460px;
+            height: 460px;
+            border: 3px dashed rgba(0, 242, 254, 0.35);
             animation: rotateClockwise 18s linear infinite;
         }
 
         .hud-ring.inner-ring {
-            width: 260px;
-            height: 260px;
-            border: 1px solid rgba(127, 0, 255, 0.3);
-            border-top: 3px solid rgba(0, 242, 254, 0.8);
-            border-bottom: 3px solid rgba(0, 242, 254, 0.8);
+            width: 410px;
+            height: 410px;
+            border: 2px solid rgba(127, 0, 255, 0.3);
+            border-top: 4px solid rgba(0, 242, 254, 0.85);
+            border-bottom: 4px solid rgba(0, 242, 254, 0.85);
             animation: rotateCounterClockwise 12s linear infinite;
         }
 
@@ -149,18 +150,18 @@
         }
 
         .ai-head {
-            width: 220px;
-            height: 220px;
+            width: 350px;
+            height: 350px;
             border-radius: 50%;
             background: radial-gradient(circle at 30% 30%, rgba(15, 35, 60, 0.85), rgba(5, 12, 22, 0.95));
-            border: 2px solid rgba(0, 242, 254, 0.6);
-            box-shadow: 0 0 30px rgba(0, 242, 254, 0.3), inset 0 0 20px rgba(0, 242, 254, 0.2);
+            border: 3px solid rgba(0, 242, 254, 0.65);
+            box-shadow: 0 0 45px rgba(0, 242, 254, 0.35), inset 0 0 30px rgba(0, 242, 254, 0.25);
             position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 22px;
+            gap: 34px;
             backdrop-filter: blur(12px);
             transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             animation: floatHead 4s infinite ease-in-out;
@@ -168,47 +169,47 @@
 
         @keyframes floatHead {
             0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
+            50% { transform: translateY(-12px); }
         }
 
         .side-node {
             position: absolute;
             top: 50%;
-            width: 14px;
-            height: 48px;
+            width: 22px;
+            height: 78px;
             background: linear-gradient(180deg, #00f2fe, #7f00ff);
-            border-radius: 8px;
+            border-radius: 12px;
             transform: translateY(-50%);
-            box-shadow: 0 0 15px rgba(0, 242, 254, 0.5);
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.6);
             transition: all 0.4s ease;
         }
 
-        .side-node.node-left { left: -18px; border-radius: 10px 2px 2px 10px; }
-        .side-node.node-right { right: -18px; border-radius: 2px 10px 10px 2px; }
+        .side-node.node-left { left: -28px; border-radius: 14px 3px 3px 14px; }
+        .side-node.node-right { right: -28px; border-radius: 3px 14px 14px 3px; }
 
         .pulse-ring {
             position: absolute;
             top: 50%; left: 50%;
             width: 100%; height: 100%;
-            border-radius: 8px;
-            border: 1px solid #00f2fe;
+            border-radius: 12px;
+            border: 2px solid #00f2fe;
             transform: translate(-50%, -50%);
             opacity: 0;
         }
 
         .eyes-container {
             display: flex;
-            gap: 36px;
+            gap: 58px;
             align-items: center;
             z-index: 2;
         }
 
         .eye {
-            width: 44px;
-            height: 44px;
+            width: 70px;
+            height: 70px;
             background: radial-gradient(circle, #ffffff 10%, #00f2fe 45%, rgba(0, 82, 212, 0.8) 100%);
             border-radius: 50%;
-            box-shadow: 0 0 20px #00f2fe, 0 0 35px rgba(0, 242, 254, 0.5);
+            box-shadow: 0 0 30px #00f2fe, 0 0 50px rgba(0, 242, 254, 0.6);
             position: relative;
             display: flex;
             justify-content: center;
@@ -218,11 +219,11 @@
         }
 
         .eye .pupil {
-            width: 14px;
-            height: 14px;
+            width: 22px;
+            height: 22px;
             background: #ffffff;
             border-radius: 50%;
-            box-shadow: 0 0 10px #ffffff;
+            box-shadow: 0 0 15px #ffffff;
             transition: transform 0.2s ease;
         }
 
@@ -235,28 +236,28 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 5px;
-            height: 30px;
-            width: 110px;
+            gap: 8px;
+            height: 48px;
+            width: 175px;
             z-index: 2;
         }
 
         .v-bar {
-            width: 4px;
-            height: 6px;
+            width: 6px;
+            height: 10px;
             background: linear-gradient(180deg, #00f2fe, #3a7bd5);
-            border-radius: 3px;
-            box-shadow: 0 0 8px #00f2fe;
+            border-radius: 4px;
+            box-shadow: 0 0 12px #00f2fe;
             transition: height 0.15s ease, background 0.3s ease;
         }
 
         .orb-container.recording .ai-head {
             border-color: #ff2a5f;
-            box-shadow: 0 0 50px rgba(255, 42, 95, 0.6), inset 0 0 25px rgba(255, 42, 95, 0.3);
+            box-shadow: 0 0 70px rgba(255, 42, 95, 0.7), inset 0 0 35px rgba(255, 42, 95, 0.4);
         }
 
         .orb-container.recording .outer-ring {
-            border-color: rgba(255, 42, 95, 0.6);
+            border-color: rgba(255, 42, 95, 0.7);
             animation-duration: 6s;
         }
 
@@ -268,8 +269,8 @@
 
         .orb-container.recording .side-node {
             background: linear-gradient(180deg, #ff2a5f, #ff758c);
-            height: 65px;
-            box-shadow: 0 0 25px #ff2a5f;
+            height: 100px;
+            box-shadow: 0 0 35px #ff2a5f;
         }
 
         .orb-container.recording .pulse-ring {
@@ -283,24 +284,24 @@
 
         .orb-container.recording .eye {
             background: radial-gradient(circle, #ffffff 10%, #ff2a5f 50%, #b3002d 100%);
-            box-shadow: 0 0 25px #ff2a5f;
+            box-shadow: 0 0 35px #ff2a5f;
             transform: scale(1.08);
         }
 
         .orb-container.recording .v-bar {
             background: linear-gradient(180deg, #ff2a5f, #ff758c);
-            box-shadow: 0 0 8px #ff2a5f;
+            box-shadow: 0 0 12px #ff2a5f;
         }
 
         .orb-container.speaking .ai-head {
             border-color: #00f2fe;
-            box-shadow: 0 0 65px rgba(0, 242, 254, 0.8);
+            box-shadow: 0 0 90px rgba(0, 242, 254, 0.85);
             transform: scale(1.04);
         }
 
         .orb-container.speaking .eye {
             transform: scale(1.12);
-            box-shadow: 0 0 30px #00f2fe, 0 0 50px rgba(0, 242, 254, 0.8);
+            box-shadow: 0 0 45px #00f2fe, 0 0 70px rgba(0, 242, 254, 0.85);
         }
 
         .orb-container.speaking .v-bar {
@@ -317,24 +318,24 @@
         .orb-container.speaking .v-bar:nth-child(7) { animation-delay: 0.05s; }
 
         @keyframes waveActive {
-            0% { height: 4px; }
-            100% { height: 28px; }
+            0% { height: 6px; }
+            100% { height: 42px; }
         }
 
         .orb-container.offline .ai-head {
             border-color: #f59e0b;
-            box-shadow: 0 0 30px rgba(245, 158, 11, 0.5);
+            box-shadow: 0 0 45px rgba(245, 158, 11, 0.5);
         }
         .orb-container.offline .eye {
             background: radial-gradient(circle, #ffffff 10%, #f59e0b 50%, #b45309 100%);
-            box-shadow: 0 0 20px #f59e0b;
+            box-shadow: 0 0 30px #f59e0b;
         }
 
         .arrow-overlay {
             position: absolute;
-            font-size: 6.5rem;
+            font-size: 10rem;
             color: #ffffff;
-            text-shadow: 0 0 20px #00f2fe, 0 0 40px #00d2ff, 0 0 60px #3a7bd5;
+            text-shadow: 0 0 30px #00f2fe, 0 0 60px #00d2ff, 0 0 90px #3a7bd5;
             opacity: 0;
             transform: scale(0.5);
             transition: all 0.4s ease;
@@ -354,91 +355,92 @@
 
         .orb-container.dir-left .arrow-overlay { animation: arrowAnimLeft 0.8s infinite alternate ease-in-out; }
         @keyframes arrowAnimLeft {
-            0% { transform: translateX(15px) scale(1); }
-            100% { transform: translateX(-25px) scale(1.25); }
+            0% { transform: translateX(20px) scale(1); }
+            100% { transform: translateX(-35px) scale(1.25); }
         }
 
         .orb-container.dir-right .arrow-overlay { animation: arrowAnimRight 0.8s infinite alternate ease-in-out; }
         @keyframes arrowAnimRight {
-            0% { transform: translateX(-15px) scale(1); }
-            100% { transform: translateX(25px) scale(1.25); }
+            0% { transform: translateX(-20px) scale(1); }
+            100% { transform: translateX(35px) scale(1.25); }
         }
 
         .orb-container.dir-up .arrow-overlay { animation: arrowAnimUp 0.8s infinite alternate ease-in-out; }
         @keyframes arrowAnimUp {
-            0% { transform: translateY(15px) scale(1); }
-            100% { transform: translateY(-25px) scale(1.25); }
+            0% { transform: translateY(20px) scale(1); }
+            100% { transform: translateY(-35px) scale(1.25); }
         }
 
         .orb-container.dir-up-left .arrow-overlay { animation: arrowAnimUpLeft 0.8s infinite alternate ease-in-out; }
         @keyframes arrowAnimUpLeft {
-            0% { transform: translate(12px, 12px) scale(1); }
-            100% { transform: translate(-20px, -20px) scale(1.25); }
+            0% { transform: translate(16px, 16px) scale(1); }
+            100% { transform: translate(-28px, -28px) scale(1.25); }
         }
 
         .orb-container.dir-up-right .arrow-overlay { animation: arrowAnimUpRight 0.8s infinite alternate ease-in-out; }
         @keyframes arrowAnimUpRight {
-            0% { transform: translate(-12px, 12px) scale(1); }
-            100% { transform: translate(20px, -20px) scale(1.25); }
+            0% { transform: translate(-16px, 16px) scale(1); }
+            100% { transform: translate(28px, -28px) scale(1.25); }
         }
 
         .status-text {
-            font-size: 1.2rem;
-            margin-top: 15px;
+            font-size: 1.5rem;
+            margin-top: 20px;
             text-align: center;
             color: #cbd5e1;
-            min-height: 35px;
-            font-weight: 500;
+            min-height: 45px;
+            font-weight: 600;
         }
 
         .key-badge {
             background: rgba(0, 242, 254, 0.15);
-            padding: 4px 12px;
-            border-radius: 6px;
+            padding: 6px 16px;
+            border-radius: 8px;
             font-weight: bold;
             color: #00f2fe;
             border: 1px solid rgba(0, 242, 254, 0.4);
         }
 
         .chat-box {
-            margin-top: 15px;
+            margin-top: 20px;
             width: 100%;
-            background: rgba(10, 22, 38, 0.6);
-            border-radius: 16px;
-            padding: 20px;
+            background: rgba(10, 22, 38, 0.7);
+            border-radius: 20px;
+            padding: 24px;
             backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 242, 254, 0.2);
+            border: 1px solid rgba(0, 242, 254, 0.3);
             display: none;
             transition: opacity 0.5s ease;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
         }
 
         .question {
-            font-size: 1.1rem;
+            font-size: 1.35rem;
             color: #38bdf8;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            font-weight: 600;
         }
 
         .answer {
-            font-size: 1.15rem;
+            font-size: 1.45rem;
             color: #ffffff;
             line-height: 1.6;
         }
 
         footer {
             width: 100%;
-            max-width: 900px;
-            background: rgba(10, 22, 38, 0.6);
-            border-radius: 16px;
-            padding: 14px 22px;
+            max-width: 1100px;
+            background: rgba(10, 22, 38, 0.65);
+            border-radius: 20px;
+            padding: 18px 28px;
             backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
             position: relative;
             z-index: 10;
-            margin-top: 15px;
+            margin-top: 20px;
         }
 
         .footer-top {
@@ -455,57 +457,57 @@
         }
 
         .time-text {
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             font-weight: 700;
             color: #ffffff;
             letter-spacing: 1px;
         }
 
         .date-text {
-            font-size: 0.85rem;
+            font-size: 1rem;
             color: #94a3b8;
         }
 
         .ble-status-box {
             position: fixed;
-            bottom: 15px;
-            right: 20px;
+            bottom: 20px;
+            right: 25px;
             z-index: 100;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             background: rgba(10, 22, 38, 0.85);
-            padding: 8px 14px;
-            border-radius: 20px;
-            border: 1px solid rgba(0, 242, 254, 0.25);
-            font-size: 0.85rem;
+            padding: 10px 18px;
+            border-radius: 24px;
+            border: 1px solid rgba(0, 242, 254, 0.3);
+            font-size: 1rem;
             color: #e2e8f0;
             backdrop-filter: blur(8px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         }
 
         .ble-dot {
-            width: 12px;
-            height: 12px;
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
             background-color: #ef4444;
-            box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
             transition: all 0.4s ease;
         }
 
         .ble-dot.connected {
             background-color: #22c55e;
-            box-shadow: 0 0 10px rgba(34, 197, 94, 0.9);
+            box-shadow: 0 0 12px rgba(34, 197, 94, 0.9);
         }
 
         .weather-box {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
         }
 
         .weather-icon {
-            font-size: 2rem;
+            font-size: 2.4rem;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -524,26 +526,26 @@
         }
 
         .city-temp {
-            font-size: 1.1rem;
+            font-size: 1.3rem;
             font-weight: 600;
             color: #38bdf8;
         }
 
         .weather-desc {
-            font-size: 0.85rem;
+            font-size: 0.95rem;
             color: #cbd5e1;
         }
 
         .reminder-box {
             background: rgba(56, 189, 248, 0.08);
-            border-left: 4px solid #38bdf8;
-            padding: 10px 14px;
-            border-radius: 6px;
-            font-size: 1.15rem;
+            border-left: 5px solid #38bdf8;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 1.25rem;
             color: #f1f5f9;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             overflow: hidden;
             position: relative;
         }
@@ -552,12 +554,12 @@
             background: #38bdf8;
             color: #0f172a;
             font-weight: 700;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 0.85rem;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.95rem;
             white-space: nowrap;
             flex-shrink: 0;
-            box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
         }
 
         .ticker-wrapper {
@@ -572,7 +574,7 @@
             white-space: nowrap;
             padding-left: 100%;
             animation: marquee 55s linear infinite;
-            font-size: 1.15rem;
+            font-size: 1.25rem;
             font-weight: 500;
             color: #ffffff;
         }
@@ -596,46 +598,45 @@
             justify-content: center;
             align-items: center;
             z-index: 10000;
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(10px);
         }
 
         .modal-content {
             background: #0f172a;
-            padding: 28px;
-            border-radius: 16px;
+            padding: 32px;
+            border-radius: 20px;
             width: 92%;
-            max-width: 650px;
+            max-width: 750px;
             max-height: 90vh;
             overflow-y: auto;
-            border: 1px solid rgba(0, 242, 254, 0.3);
-            box-shadow: 0 0 40px rgba(0, 242, 254, 0.2);
+            border: 1px solid rgba(0, 242, 254, 0.35);
+            box-shadow: 0 0 50px rgba(0, 242, 254, 0.25);
             position: relative;
         }
 
         .modal-content h2 {
-            font-size: 1.35rem;
-            margin-bottom: 15px;
+            font-size: 1.5rem;
+            margin-bottom: 18px;
             color: #00f2fe;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
-        /* Password Auth UI */
         .pass-box {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 18px;
         }
 
         .pass-input {
             width: 100%;
-            padding: 12px 16px;
+            padding: 14px 18px;
             background: #070d19;
             border: 1px solid #1e293b;
-            border-radius: 8px;
+            border-radius: 10px;
             color: #fff;
-            font-size: 1rem;
+            font-size: 1.1rem;
             outline: none;
             transition: border 0.3s;
             -webkit-user-select: text !important;
@@ -645,13 +646,12 @@
             border-color: #00f2fe;
         }
 
-        /* Category Tabs Navigation */
         .category-tabs {
             display: flex;
-            gap: 8px;
+            gap: 10px;
             overflow-x: auto;
-            padding-bottom: 8px;
-            margin-bottom: 15px;
+            padding-bottom: 10px;
+            margin-bottom: 18px;
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
@@ -659,26 +659,26 @@
             background: rgba(255, 255, 255, 0.06);
             border: 1px solid rgba(0, 242, 254, 0.2);
             color: #cbd5e1;
-            padding: 8px 14px;
-            border-radius: 8px;
+            padding: 10px 16px;
+            border-radius: 10px;
             cursor: pointer;
             white-space: nowrap;
-            font-size: 0.88rem;
+            font-size: 0.98rem;
             transition: all 0.3s ease;
         }
 
         .tab-btn.active {
-            background: rgba(0, 242, 254, 0.2);
+            background: rgba(0, 242, 254, 0.25);
             color: #00f2fe;
             border-color: #00f2fe;
             font-weight: 600;
-            box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+            box-shadow: 0 0 12px rgba(0, 242, 254, 0.35);
         }
 
         .tab-content {
             display: none;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
         }
 
         .tab-content.active {
@@ -686,21 +686,21 @@
         }
 
         .tab-label {
-            font-size: 0.95rem;
+            font-size: 1.05rem;
             color: #38bdf8;
             font-weight: 600;
         }
 
         textarea {
             width: 100%;
-            height: 180px;
+            height: 220px;
             background: #070d19;
             color: #fff;
             border: 1px solid #1e293b;
-            border-radius: 8px;
-            padding: 12px;
+            border-radius: 10px;
+            padding: 14px;
             resize: vertical;
-            font-size: 0.95rem;
+            font-size: 1.05rem;
             line-height: 1.5;
             -webkit-user-select: text !important;
             user-select: text !important;
@@ -714,22 +714,22 @@
         .btn-group {
             display: flex;
             justify-content: flex-end;
-            gap: 12px;
-            margin-top: 18px;
+            gap: 14px;
+            margin-top: 22px;
         }
 
         .btn {
-            padding: 10px 20px;
-            border-radius: 8px;
+            padding: 12px 24px;
+            border-radius: 10px;
             border: none;
             cursor: pointer;
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 1.05rem;
             transition: all 0.3s;
         }
 
         .btn-primary { background: #0284c7; color: white; }
-        .btn-primary:hover { background: #0369a1; box-shadow: 0 0 12px rgba(2, 132, 199, 0.5); }
+        .btn-primary:hover { background: #0369a1; box-shadow: 0 0 15px rgba(2, 132, 199, 0.5); }
         .btn-secondary { background: #475569; color: white; }
         .btn-secondary:hover { background: #334155; }
     </style>
@@ -747,7 +747,7 @@
     </header>
 
     <main>
-        <!-- 🚀 HIGH-TECH SCI-FI AI AVATAR -->
+        <!-- 🚀 HIGH-TECH SCI-FI AI AVATAR (ENLARGED FOR WINDOWS TOUCHSCREEN) -->
         <div class="orb-container" id="orbContainer">
             <div class="hud-ring outer-ring"></div>
             <div class="hud-ring inner-ring"></div>
@@ -812,10 +812,10 @@
 
     <!-- POPUP 1: PASSWORD AUTHENTICATION -->
     <div class="modal" id="authModal">
-        <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-content" style="max-width: 440px;">
             <h2>🔒 Нэвтрэх Нууц Үг</h2>
             <div class="pass-box">
-                <p style="color: #94a3b8; font-size: 0.9rem;">Тохиргооны хэсэг рүү нэвтрэхийн тулд нууц үгээ оруулна уу.</p>
+                <p style="color: #94a3b8; font-size: 1rem;">Тохиргооны хэсэг рүү нэвтрэхийн тулд нууц үгээ оруулна уу.</p>
                 <input type="password" id="adminPassInput" class="pass-input" placeholder="Нууц үг оруулах..." onkeydown="if(event.key==='Enter') verifyAdminPassword()">
                 <div class="btn-group">
                     <button class="btn btn-secondary" onclick="closeAuthModal()">Цуцлах</button>
@@ -1249,7 +1249,7 @@
             reset() {
                 this.x = Math.random() * canvas.width;
                 this.y = Math.random() * canvas.height;
-                this.size = 22 + Math.random() * 4;
+                this.size = 28 + Math.random() * 5;
                 this.angle = Math.random() * Math.PI * 2;
                 this.targetAngle = this.angle;
                 this.baseSpeed = 1.4 + Math.random() * 0.4;
@@ -1276,9 +1276,9 @@
                 const dy = orbCenterY - this.y;
                 const dist = Math.hypot(dx, dy);
 
-                if (dist > 380) {
+                if (dist > 450) {
                     this.targetAngle = Math.atan2(dy, dx) + (Math.random() - 0.5) * 0.5;
-                } else if (dist < 110) {
+                } else if (dist < 180) {
                     this.targetAngle = Math.atan2(-dy, -dx) + (Math.random() - 0.5) * 0.5;
                 }
 
