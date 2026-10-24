@@ -138,7 +138,6 @@ def sync_schedule_data():
 def get_all_categories_data():
     global CATEGORIES_CACHE
 
-    # 1. Neon SQL баазаас унших
     if DATABASE_URL:
         try:
             conn = get_db_connection()
@@ -156,7 +155,6 @@ def get_all_categories_data():
         except Exception as e:
             print(f"❌ DB Уншихад алдаа: {e}")
 
-    # 2. Файлаас унших (Fallback)
     if os.path.exists(DATA_FILE):
         try:
             with open(DATA_FILE, "r", encoding="utf-8") as f:
@@ -258,7 +256,7 @@ def generate_ai_response(user_question, context_text, current_day, current_time)
     for model_name in candidate_models:
         payload = {
             "model": model_name,
-            "max_tokens": 500,  # 🛠️ 402 алдааг зассан: Хариултын токений дээд хэмжээг 500 болгож хязгаарлав
+            "max_tokens": 500,  # 🛠️ 402 алдааг зассан хязгаарлалт
             "messages": [
                 {"role": "system", "content": system_instruction},
                 {"role": "user", "content": user_question},
@@ -280,7 +278,7 @@ def generate_ai_response(user_question, context_text, current_day, current_time)
 
 
 # ---------------------------------------------------------
-# 5. FLASK ROUTE БОЛОН АУДИО МЭДЭЭЛЭЛ
+# 5. FLASK ROUTE БОЛОН АУДИО/ВИДЕО МЭДЭЭЛЭЛ
 # ---------------------------------------------------------
 async def text_to_speech_edge(text, output_file):
     communicate = edge_tts.Communicate(text, "mn-MN-YesuiNeural")
@@ -313,12 +311,10 @@ def manage_school_data():
         payload = request.json or {}
         categories_data = payload.get("categories", {})
         
-        # CATEGORIES_CACHE шинэчлэх
         for k in CATEGORIES_CACHE.keys():
             if k in categories_data:
                 CATEGORIES_CACHE[k] = categories_data[k]
 
-        # 1. Neon PostgreSQL баазад хадгалах
         if DATABASE_URL:
             try:
                 conn = get_db_connection()
@@ -338,7 +334,6 @@ def manage_school_data():
             except Exception as e:
                 print(f"❌ DB Бичихэд алдаа: {e}")
 
-        # 2. Нөөц файлд хадгалах
         try:
             full_txt = "\n\n".join([f"=== {k.upper()} ===\n{v}" for k, v in CATEGORIES_CACHE.items() if v])
             with open(DATA_FILE, "w", encoding="utf-8") as f:
@@ -395,18 +390,26 @@ def process_voice():
     if any(keyword in question_text.lower() for keyword in feedback_keywords):
         send_to_google_doc(f"Хэрэглэгчийн санал/хүсэлт: \"{question_text}\"")
 
-    tz_mn = datetime.timezone(datetime.timedelta(hours=8))
-    now = datetime.datetime.now(tz_mn)
-    days_mn = ["Даваа", "Мягмар", "Лхагва", "Пүрэв", "Баасан", "Бямба", "Ням"]
-    current_day = days_mn[now.weekday()]
-    current_time = now.strftime("%H:%M")
+    # 🎬 ВИДЕО ТАНИЛЦУУЛГА АСУУСАН ЭСЭХИЙГ ШАЛГАХ
+    video_url = None
+    intro_keywords = ["танилцуулга", "бичлэг", "видео", "сургуулийн тухай", "танилцуулга өгөөч"]
+    
+    if any(keyword in question_text.lower() for keyword in intro_keywords):
+        video_url = "/static/school_intro.mp4"
+        ai_answer = "Манай сургуулийн танилцуулга бичлэгийг хүлээн авч үзнэ үү."
+    else:
+        tz_mn = datetime.timezone(datetime.timedelta(hours=8))
+        now = datetime.datetime.now(tz_mn)
+        days_mn = ["Даваа", "Мягмар", "Лхагва", "Пүрэв", "Баасан", "Бямба", "Ням"]
+        current_day = days_mn[now.weekday()]
+        current_time = now.strftime("%H:%M")
 
-    context_text = build_smart_context(question_text, current_day, current_time)
+        context_text = build_smart_context(question_text, current_day, current_time)
 
-    try:
-        ai_answer = generate_ai_response(question_text, context_text, current_day, current_time)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        try:
+            ai_answer = generate_ai_response(question_text, context_text, current_day, current_time)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
 
     audio_filename = f"response_{uuid.uuid4().hex[:8]}.mp3"
     audio_filepath = os.path.join("static", audio_filename)
@@ -423,6 +426,7 @@ def process_voice():
         "question": question_text,
         "answer": ai_answer,
         "audio_url": f"/static/{audio_filename}" if has_audio else None,
+        "video_url": video_url
     })
 
 
