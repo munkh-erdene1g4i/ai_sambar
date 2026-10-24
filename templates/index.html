@@ -100,9 +100,7 @@
             z-index: 10;
         }
 
-        /* =========================================================
-           🚀 ULTRA-FUTURISTIC HIGH-TECH AI AVATAR
-           ========================================================= */
+        /* 🚀 ULTRA-FUTURISTIC HIGH-TECH AI AVATAR */
         .orb-container {
             width: 300px;
             height: 300px;
@@ -117,7 +115,6 @@
             z-index: 20;
         }
 
-        /* HUD ЭРГЭДЭГ ХҮРЭЭНҮҮД */
         .hud-ring {
             position: absolute;
             border-radius: 50%;
@@ -151,7 +148,6 @@
             100% { transform: rotate(-360deg); }
         }
 
-        /* АИ ТОЛГОЙ БОЛОН ШИЛЭН ХАВТАН */
         .ai-head {
             width: 220px;
             height: 220px;
@@ -175,7 +171,6 @@
             50% { transform: translateY(-10px); }
         }
 
-        /* ЧИХ / МЭДРЭГЧ НОДУУД */
         .side-node {
             position: absolute;
             top: 50%;
@@ -201,7 +196,6 @@
             opacity: 0;
         }
 
-        /* 👁️ КВАНТА НЕОН НҮДНҮҮД */
         .eyes-container {
             display: flex;
             gap: 36px;
@@ -237,7 +231,6 @@
             97% { transform: scaleY(0.06); }
         }
 
-        /* 👄 ВИЗУАЛАЙЗЕР АМ (SPECTRUM WAVES) */
         .mouth-visualizer {
             display: flex;
             align-items: center;
@@ -257,7 +250,6 @@
             transition: height 0.15s ease, background 0.3s ease;
         }
 
-        /* 🔴 СОНСОЖ БАЙХ ТӨЛӨВ (.recording) */
         .orb-container.recording .ai-head {
             border-color: #ff2a5f;
             box-shadow: 0 0 50px rgba(255, 42, 95, 0.6), inset 0 0 25px rgba(255, 42, 95, 0.3);
@@ -300,7 +292,6 @@
             box-shadow: 0 0 8px #ff2a5f;
         }
 
-        /* 🔊 ЯРЬЖ БАЙХ ТӨЛӨВ (.speaking - EQUALIZER ANIMATION) */
         .orb-container.speaking .ai-head {
             border-color: #00f2fe;
             box-shadow: 0 0 65px rgba(0, 242, 254, 0.8);
@@ -330,7 +321,6 @@
             100% { height: 28px; }
         }
 
-        /* ⚠️ ОФФЛАЙН ТӨЛӨВ (.offline) */
         .orb-container.offline .ai-head {
             border-color: #f59e0b;
             box-shadow: 0 0 30px rgba(245, 158, 11, 0.5);
@@ -340,7 +330,6 @@
             box-shadow: 0 0 20px #f59e0b;
         }
 
-        /* ➡️ ЗАМ ЧИГЛЭЛ БАРААМЖААЛАХ СУМ */
         .arrow-overlay {
             position: absolute;
             font-size: 6.5rem;
@@ -598,6 +587,7 @@
             100% { transform: translateX(-100%); }
         }
 
+        /* MODAL / POPUP STYLES */
         .modal {
             display: none;
             position: fixed;
@@ -605,48 +595,143 @@
             background: rgba(0, 0, 0, 0.85);
             justify-content: center;
             align-items: center;
-            z-index: 100;
+            z-index: 10000;
             backdrop-filter: blur(8px);
         }
 
         .modal-content {
             background: #0f172a;
-            padding: 30px;
+            padding: 28px;
             border-radius: 16px;
-            width: 90%;
-            max-width: 600px;
+            width: 92%;
+            max-width: 650px;
+            max-height: 90vh;
+            overflow-y: auto;
             border: 1px solid rgba(0, 242, 254, 0.3);
             box-shadow: 0 0 40px rgba(0, 242, 254, 0.2);
+            position: relative;
+        }
+
+        .modal-content h2 {
+            font-size: 1.35rem;
+            margin-bottom: 15px;
+            color: #00f2fe;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Password Auth UI */
+        .pass-box {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .pass-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: #070d19;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            transition: border 0.3s;
+            -webkit-user-select: text !important;
+            user-select: text !important;
+        }
+        .pass-input:focus {
+            border-color: #00f2fe;
+        }
+
+        /* Category Tabs Navigation */
+        .category-tabs {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(0, 242, 254, 0.2);
+            color: #cbd5e1;
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 0.88rem;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: rgba(0, 242, 254, 0.2);
+            color: #00f2fe;
+            border-color: #00f2fe;
+            font-weight: 600;
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        .tab-label {
+            font-size: 0.95rem;
+            color: #38bdf8;
+            font-weight: 600;
         }
 
         textarea {
             width: 100%;
-            height: 200px;
+            height: 180px;
             background: #070d19;
             color: #fff;
             border: 1px solid #1e293b;
             border-radius: 8px;
             padding: 12px;
-            margin: 15px 0;
             resize: vertical;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            -webkit-user-select: text !important;
+            user-select: text !important;
+        }
+
+        textarea:focus {
+            border-color: #00f2fe;
+            outline: none;
         }
 
         .btn-group {
             display: flex;
             justify-content: flex-end;
-            gap: 10px;
+            gap: 12px;
+            margin-top: 18px;
         }
 
         .btn {
-            padding: 8px 18px;
+            padding: 10px 20px;
             border-radius: 8px;
             border: none;
             cursor: pointer;
             font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s;
         }
 
         .btn-primary { background: #0284c7; color: white; }
+        .btn-primary:hover { background: #0369a1; box-shadow: 0 0 12px rgba(2, 132, 199, 0.5); }
         .btn-secondary { background: #475569; color: white; }
+        .btn-secondary:hover { background: #334155; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -658,7 +743,7 @@
             <img src="/static/logo.png" alt="Сургуулийн Лого" class="school-logo">
             <h1>Сургуулийн Ухаалаг Туслах</h1>
         </div>
-        <button class="admin-btn" onclick="openAdmin()">⚙️ Тохиргоо</button>
+        <button class="admin-btn" onclick="showAuthModal()">⚙️ Тохиргоо</button>
     </header>
 
     <main>
@@ -725,13 +810,68 @@
         <span id="bleText">BLE: Холбогдоогүй</span>
     </div>
 
+    <!-- POPUP 1: PASSWORD AUTHENTICATION -->
+    <div class="modal" id="authModal">
+        <div class="modal-content" style="max-width: 400px;">
+            <h2>🔒 Нэвтрэх Нууц Үг</h2>
+            <div class="pass-box">
+                <p style="color: #94a3b8; font-size: 0.9rem;">Тохиргооны хэсэг рүү нэвтрэхийн тулд нууц үгээ оруулна уу.</p>
+                <input type="password" id="adminPassInput" class="pass-input" placeholder="Нууц үг оруулах..." onkeydown="if(event.key==='Enter') verifyAdminPassword()">
+                <div class="btn-group">
+                    <button class="btn btn-secondary" onclick="closeAuthModal()">Цуцлах</button>
+                    <button class="btn btn-primary" onclick="verifyAdminPassword()">Нэвтрэх</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP 2: CATEGORIZED DATA MANAGER (Neon SQL) -->
     <div class="modal" id="adminModal">
         <div class="modal-content">
-            <h2>Сургуулийн Мэдээлэл Шинэчлэх</h2>
-            <textarea id="schoolContextInput" placeholder="Энд сургуулийн хичээлийн танхим, анги танхимын байршил, ерөнхий мэдээллийг оруулна уу..."></textarea>
+            <h2>⚙️ Сургуулийн Ангилсан Мэдээлэл (Neon SQL)</h2>
+            
+            <!-- Category Tabs -->
+            <div class="category-tabs">
+                <button class="tab-btn active" onclick="switchTab('general', this)">🏫 Сургуулийн мэдээлэл</button>
+                <button class="tab-btn" onclick="switchTab('teachers', this)">👨‍🏫 Багш ажилчны мэдээлэл</button>
+                <button class="tab-btn" onclick="switchTab('classrooms', this)">🚪 Анги танхимын мэдээлэл</button>
+                <button class="tab-btn" onclick="switchTab('advice', this)">💡 Зөвлөгөө зөвлөмж</button>
+                <button class="tab-btn" onclick="switchTab('other', this)">📌 Бусад мэдээлэл</button>
+            </div>
+
+            <!-- Tab 1: General -->
+            <div class="tab-content active" id="tab-general">
+                <span class="tab-label">1. Сургуулийн ерөнхий мэдээлэл, танилцуулга, журам:</span>
+                <textarea id="cat_general" placeholder="Сургуулийн эрхэм зорилго, ерөнхий журам, төлбөр тооцоо, цагийн хуваарийн мэдээллийг оруулна уу..."></textarea>
+            </div>
+
+            <!-- Tab 2: Teachers -->
+            <div class="tab-content" id="tab-teachers">
+                <span class="tab-label">2. Багш ажилчдын мэдээлэл:</span>
+                <textarea id="cat_teachers" placeholder="Багш нарын нэрс, заадаг хичээл, холбоо барих мэдээлэл, өрөөний дугаарыг оруулна уу..."></textarea>
+            </div>
+
+            <!-- Tab 3: Classrooms -->
+            <div class="tab-content" id="tab-classrooms">
+                <span class="tab-label">3. Анги танхимын мэдээлэл болон байршил:</span>
+                <textarea id="cat_classrooms" placeholder="Анги танхимын давхар, чиглэл, лаборатори, спорт заалны байршлыг оруулна уу..."></textarea>
+            </div>
+
+            <!-- Tab 4: Advice -->
+            <div class="tab-content" id="tab-advice">
+                <span class="tab-label">4. Зөвлөгөө, зөвлөмж:</span>
+                <textarea id="cat_advice" placeholder="Сурагчдад зориулсан хичээлийн зөвлөгөө, аюулгүй байдлын санамж, суралцах зөвлөмж оруулна уу..."></textarea>
+            </div>
+
+            <!-- Tab 5: Other -->
+            <div class="tab-content" id="tab-other">
+                <span class="tab-label">5. Бусад мэдээлэл:</span>
+                <textarea id="cat_other" placeholder="Сургуулийн онцлох арга хэмжээ, бусад нэмэлт мэдээллийг оруулна уу..."></textarea>
+            </div>
+
             <div class="btn-group">
                 <button class="btn btn-secondary" onclick="closeAdmin()">Хаах</button>
-                <button class="btn btn-primary" onclick="saveData()">Хадгалах</button>
+                <button class="btn btn-primary" onclick="saveCategoriesData()">💾 Neon SQL-д Хадгалах</button>
             </div>
         </div>
     </div>
@@ -750,8 +890,10 @@
         const chatBox = document.getElementById('chatBox');
         const userQuestion = document.getElementById('userQuestion');
         const aiAnswer = document.getElementById('aiAnswer');
+        
+        const authModal = document.getElementById('authModal');
         const adminModal = document.getElementById('adminModal');
-        const schoolContextInput = document.getElementById('schoolContextInput');
+        const adminPassInput = document.getElementById('adminPassInput');
         
         const bleDot = document.getElementById('bleDot');
         const bleText = document.getElementById('bleText');
@@ -1484,28 +1626,80 @@
             }
         });
 
-        function openAdmin() {
-            const password = prompt("Тохиргоо руу нэвтрэх нууц үгээ оруулна уу:");
-            if (password === "0614") {
-                fetch('/api/school-data').then(res => res.json()).then(data => {
-                    schoolContextInput.value = data.data || '';
-                    adminModal.style.display = 'flex';
-                });
-            } else if (password !== null) {
+        // POPUP & AUTHENTICATION CONTROLS
+        function showAuthModal() {
+            adminPassInput.value = "";
+            authModal.style.display = 'flex';
+            setTimeout(() => adminPassInput.focus(), 100);
+        }
+
+        function closeAuthModal() {
+            authModal.style.display = 'none';
+        }
+
+        function verifyAdminPassword() {
+            const pwd = adminPassInput.value.trim();
+            if (pwd === "0614") {
+                closeAuthModal();
+                openAdminPanel();
+            } else {
                 alert("❌ Нууц үг буруу байна!");
+                adminPassInput.select();
             }
         }
 
-        function closeAdmin() { adminModal.style.display = 'none'; }
+        function openAdminPanel() {
+            fetch('/api/school-data')
+                .then(res => res.json())
+                .then(data => {
+                    const cats = data.categories || {};
+                    document.getElementById('cat_general').value = cats.general || '';
+                    document.getElementById('cat_teachers').value = cats.teachers || '';
+                    document.getElementById('cat_classrooms').value = cats.classrooms || '';
+                    document.getElementById('cat_advice').value = cats.advice || '';
+                    document.getElementById('cat_other').value = cats.other || '';
 
-        function saveData() {
+                    adminModal.style.display = 'flex';
+                })
+                .catch(err => {
+                    alert("Мэдээлэл татахад алдаа гарлаа: " + err);
+                });
+        }
+
+        function closeAdmin() { 
+            adminModal.style.display = 'none'; 
+        }
+
+        function switchTab(catKey, btnEl) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            btnEl.classList.add('active');
+            const target = document.getElementById('tab-' + catKey);
+            if (target) target.classList.add('active');
+        }
+
+        function saveCategoriesData() {
+            const categories = {
+                general: document.getElementById('cat_general').value,
+                teachers: document.getElementById('cat_teachers').value,
+                classrooms: document.getElementById('cat_classrooms').value,
+                advice: document.getElementById('cat_advice').value,
+                other: document.getElementById('cat_other').value
+            };
+
             fetch('/api/school-data', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ data: schoolContextInput.value })
-            }).then(() => {
-                alert("Амжилттай хадгалагдлаа!");
+                body: JSON.stringify({ categories: categories })
+            })
+            .then(res => res.json())
+            .then(resData => {
+                alert("✅ Бүх ангиллын мэдээлэл Neon SQL баазад амжилттай хадгалагдлаа!");
                 closeAdmin();
+            })
+            .catch(err => {
+                alert("❌ Хадгалахад алдаа гарлаа: " + err);
             });
         }
 
