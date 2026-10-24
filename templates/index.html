@@ -69,7 +69,7 @@
             -webkit-text-fill-color: transparent;
         }
 
-        /* 🔽 ТОХИРГОО ТОВЧЛУУРЫГ ДӨӨШЛҮҮЛЖ ДООД ЗҮҮН БУЛАНД БАЙРЛУУЛАВ */
+        /* 🔽 ДООШЛУУЛСАН ТОХИРГОО ТОВЧЛУУР (Доод зүүн талд) */
         .admin-btn {
             position: fixed;
             bottom: 20px;
@@ -866,6 +866,18 @@
         <span id="bleText">BLE: Холбогдоогүй</span>
     </div>
 
+    <!-- 🎬 POPUP 0: VIDEO PLAYER MODAL -->
+    <div class="modal" id="videoModal">
+        <div class="modal-content" style="max-width: 900px; padding: 20px; background: #050b14; text-align: center; border-color: #00f2fe; position: relative;">
+            <button onclick="closeVideoModal()" style="position: absolute; top: 12px; right: 16px; background: rgba(255, 42, 95, 0.8); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; z-index: 10;">✕</button>
+            <h2 style="margin-bottom: 15px; color: #00f2fe;">🎬 Сургуулийн Танилцуулга Бичлэг</h2>
+            <video id="introVideoPlayer" width="100%" controls style="border-radius: 12px; max-height: 70vh; outline: none; border: 1px solid rgba(0, 242, 254, 0.3);">
+                <source src="" type="video/mp4">
+                Таны хөтөч видео тоглуулахыг дэмжихгүй байна.
+            </video>
+        </div>
+    </div>
+
     <!-- POPUP 1: PASSWORD AUTHENTICATION -->
     <div class="modal" id="authModal">
         <div class="modal-content" style="max-width: 440px;">
@@ -886,7 +898,6 @@
         <div class="modal-content">
             <h2>⚙️ Сургуулийн Ангилсан Мэдээлэл (Neon SQL)</h2>
             
-            <!-- Category Tabs -->
             <div class="category-tabs">
                 <button class="tab-btn active" onclick="switchTab('general', this)">🏫 Сургуулийн мэдээлэл</button>
                 <button class="tab-btn" onclick="switchTab('teachers', this)">👨‍🏫 Багш ажилчны мэдээлэл</button>
@@ -895,31 +906,26 @@
                 <button class="tab-btn" onclick="switchTab('other', this)">📌 Бусад мэдээлэл</button>
             </div>
 
-            <!-- Tab 1: General -->
             <div class="tab-content active" id="tab-general">
                 <span class="tab-label">1. Сургуулийн ерөнхий мэдээлэл, танилцуулга, журам:</span>
                 <textarea id="cat_general" placeholder="Сургуулийн эрхэм зорилго, ерөнхий журам, төлбөр тооцоо, цагийн хуваарийн мэдээллийг оруулна уу..."></textarea>
             </div>
 
-            <!-- Tab 2: Teachers -->
             <div class="tab-content" id="tab-teachers">
                 <span class="tab-label">2. Багш ажилчдын мэдээлэл:</span>
                 <textarea id="cat_teachers" placeholder="Багш нарын нэрс, заадаг хичээл, холбоо барих мэдээлэл, өрөөний дугаарыг оруулна уу..."></textarea>
             </div>
 
-            <!-- Tab 3: Classrooms -->
             <div class="tab-content" id="tab-classrooms">
                 <span class="tab-label">3. Анги танхимын мэдээлэл болон байршил:</span>
                 <textarea id="cat_classrooms" placeholder="Анги танхимын давхар, чиглэл, лаборатори, спорт заалны байршлыг оруулна уу..."></textarea>
             </div>
 
-            <!-- Tab 4: Advice -->
             <div class="tab-content" id="tab-advice">
                 <span class="tab-label">4. Зөвлөгөө, зөвлөмж:</span>
                 <textarea id="cat_advice" placeholder="Сурагчдад зориулсан хичээлийн зөвлөгөө, аюулгүй байдлын санамж, суралцах зөвлөмж оруулна уу..."></textarea>
             </div>
 
-            <!-- Tab 5: Other -->
             <div class="tab-content" id="tab-other">
                 <span class="tab-label">5. Бусад мэдээлэл:</span>
                 <textarea id="cat_other" placeholder="Сургуулийн онцлох арга хэмжээ, бусад нэмэлт мэдээллийг оруулна уу..."></textarea>
@@ -933,7 +939,7 @@
     </div>
 
     <script>
-        // Context menu & Touch hold prevention
+        // Context menu prevention
         window.addEventListener('contextmenu', function (e) {
             e.preventDefault();
             e.stopPropagation();
@@ -949,6 +955,8 @@
         
         const authModal = document.getElementById('authModal');
         const adminModal = document.getElementById('adminModal');
+        const videoModal = document.getElementById('videoModal');
+        const introVideoPlayer = document.getElementById('introVideoPlayer');
         const adminPassInput = document.getElementById('adminPassInput');
         
         const bleDot = document.getElementById('bleDot');
@@ -967,7 +975,7 @@
         let hideChatTimeout = null;
         let currentBeaconAudio = null;
 
-        // 🌐 ИНТЕРНЕТ СҮЛЖЭЭНИЙ ЧАНАРЫГ БОДИТ ХУГАЦААНД ХЭМЖИХ (НОГООН, ШАР, УЛААН)
+        // 🌐 ИНТЕРНЕТ СҮЛЖЭЭНИЙ ЧАНАРЫГ БОДИТ ХУГАЦААНД ХЭМЖИХ
         async function measureNetworkQuality() {
             if (!navigator.onLine) {
                 netDot.className = 'net-dot poor';
@@ -1538,6 +1546,23 @@
             }
         }
 
+        // 🎬 ВИДЕО ТАНИЛЦУУЛГА ТОГЛУУЛАХ ФУНКЦҮҮД
+        function playIntroVideo(videoUrl) {
+            introVideoPlayer.src = videoUrl;
+            videoModal.style.display = 'flex';
+            introVideoPlayer.play();
+
+            introVideoPlayer.onended = () => {
+                closeVideoModal();
+            };
+        }
+
+        function closeVideoModal() {
+            introVideoPlayer.pause();
+            introVideoPlayer.currentTime = 0;
+            videoModal.style.display = 'none';
+        }
+
         async function startRecording() {
             if (!navigator.onLine) return;
             if (isRecording || isProcessing) return;
@@ -1647,6 +1672,11 @@
                     isProcessing = false;
                 } else {
                     showChat("🙋 Асуулт: " + data.question, "🤖 Хариулт: " + data.answer);
+
+                    // 🎬 Сургуулийн танилцуулга бичлэг олдсон бол тоглуулах
+                    if (data.video_url) {
+                        playIntroVideo(data.video_url);
+                    }
 
                     checkAndShowDirection(data.answer, data.direction);
 
