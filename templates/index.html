@@ -159,7 +159,6 @@
             100% { transform: scale(1.18); box-shadow: 0 0 80px #00f2fe, 0 0 130px #00c6ff; filter: hue-rotate(40deg); }
         }
 
-        /* Интернэт тасарсан үеийн ШАР дугуй болон анимейшн */
         .orb-container.offline .orb {
             background: radial-gradient(circle, #facc15 0%, #eab308 100%);
             box-shadow: 0 0 50px rgba(234, 179, 8, 0.8);
@@ -366,7 +365,7 @@
             border-left: 4px solid #38bdf8;
             padding: 10px 14px;
             border-radius: 6px;
-            font-size: 1.15rem; /* Фонтыг томруулсан */
+            font-size: 1.15rem;
             color: #f1f5f9;
             display: flex;
             align-items: center;
@@ -399,7 +398,7 @@
             white-space: nowrap;
             padding-left: 100%;
             animation: marquee 55s linear infinite;
-            font-size: 1.15rem; /* Урсаж буй бичвэрийн фонт хэмжээг томруулсан */
+            font-size: 1.15rem;
             font-weight: 500;
             color: #ffffff;
         }
@@ -552,9 +551,6 @@
         let hideChatTimeout = null;
         let currentBeaconAudio = null;
 
-        // ---------------------------------------------------------
-        // ИНТЕРНЭТ ХОЛБОЛТ ШАЛГАХ
-        // ---------------------------------------------------------
         function checkNetworkStatus() {
             if (!navigator.onLine) {
                 orbContainer.classList.add('offline');
@@ -572,7 +568,6 @@
         window.addEventListener('online', checkNetworkStatus);
         window.addEventListener('offline', checkNetworkStatus);
         setInterval(checkNetworkStatus, 3000);
-        checkNetworkStatus();
 
         async function initMic() {
             if (!micStream) {
@@ -642,7 +637,7 @@
                 } else if ([1, 2, 3].includes(code)) {
                     icon = '⛅'; desc = 'Үүлэрхэг'; weatherTipText = 'Гадаа үүлэрхэг байна, дулаан хувцаслаарай! 🧥';
                 } else if ([45, 48].includes(code)) {
-                    icon = '🌫️️'; desc = 'Манантай'; weatherTipText = 'Манантай байна, замдаа анхааралтай яваарай! 🌫️';
+                    icon = '🌫️'; desc = 'Манантай'; weatherTipText = 'Манантай байна, замдаа анхааралтай яваарай! 🌫️';
                 } else if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) {
                     icon = '🌧️'; desc = 'Бороотой'; weatherTipText = 'Бороо орно, шүхрээ мартуузай! ☂️';
                 } else if ([71, 73, 75, 77, 85, 86].includes(code)) {
@@ -1095,12 +1090,11 @@
         }
 
         async function startRecording() {
-            if (!checkNetworkStatus()) return; // Интернэт тасарсан үед бичлэг хийхгүй
+            if (!checkNetworkStatus()) return;
             if (isRecording || isProcessing) return;
 
             isRecording = true; 
 
-            // Beacon-ийн ярьж буй дууг дарах
             if (currentBeaconAudio) {
                 try {
                     currentBeaconAudio.pause();
@@ -1212,9 +1206,13 @@
                         isSpeaking = true;
                         isProcessing = false;
                         orbContainer.classList.add('speaking');
+                        
                         const audio = new Audio(data.audio_url);
                         
-                        audio.play().catch(e => {
+                        audio.play().then(() => {
+                            console.log("🔊 Аудио амжилттай тоглуулж байна.");
+                        }).catch(e => {
+                            console.error("⚠️ Аудио тоглуулах боломжгүй байна:", e);
                             isSpeaking = false;
                             orbContainer.classList.remove('speaking');
                         });
@@ -1340,7 +1338,9 @@
                     }
                     currentBeaconAudio = new Audio(data.audio_url);
                     
-                    currentBeaconAudio.play().catch(err => {
+                    currentBeaconAudio.play().then(() => {
+                        console.log("🔊 Beacon аудио амжилттай тоглуулж байна.");
+                    }).catch(err => {
                         isSpeaking = false;
                         orbContainer.classList.remove('speaking');
                     });
