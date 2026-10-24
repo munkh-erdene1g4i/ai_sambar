@@ -29,11 +29,14 @@ DATA_FILE = "school_data.txt"
 
 SCHEDULE_DF = None
 LAST_FETCH_TIME = None
+
+# Сургуулийн мэдээллийг RAM санах ойд бэлэн байлгах глобал кэш
 SCHOOL_DATA_CACHE = None
 
 teacher_cooldowns = {}
 pending_greetings = []
 COOLDOWN_SECONDS = 60
+
 last_ble_ping = 0
 
 
@@ -127,8 +130,8 @@ def sync_schedule_data():
 
 def get_school_general_info():
     global SCHOOL_DATA_CACHE
-    
-    # 1. Neon SQL баазаас унших
+
+    # 1. Neon SQL баазаас хамгийн түрүүнд унших
     if DATABASE_URL:
         try:
             conn = get_db_connection()
@@ -154,7 +157,7 @@ def get_school_general_info():
         SCHOOL_DATA_CACHE = env_info
         return env_info
 
-    # 4. Хэрэв бааз болон орчны хувьсагч байхгүй бол локал файлаас унших
+    # 4. Файлаас унших (Fallback)
     if os.path.exists(DATA_FILE):
         try:
             with open(DATA_FILE, "r", encoding="utf-8") as f:
@@ -323,7 +326,7 @@ def manage_school_data():
         except Exception as e:
             print(f"❌ Файл бичихэд алдаа: {e}")
             
-        return jsonify({"status": "success", "message": "Сургуулийн мэдээлэл баазад амжилттай хадгалагдлаа!"})
+        return jsonify({"status": "success", "message": "Мэдээлэл баазад амжилттай хадгалагдлаа!"})
 
     context = get_school_general_info()
     return jsonify({"data": context})
