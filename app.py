@@ -30,8 +30,14 @@ DATA_FILE = "school_data.txt"
 SCHEDULE_DF = None
 LAST_FETCH_TIME = None
 
-# Сургуулийн мэдээллийг RAM санах ойд бэлэн байлгах глобал кэш
-SCHOOL_DATA_CACHE = None
+# Ангилсан мэдээллийг RAM санах ойд бэлэн байлгах кэш
+CATEGORIES_CACHE = {
+    "general": "",
+    "teachers": "",
+    "classrooms": "",
+    "advice": "",
+    "other": ""
+}
 
 teacher_cooldowns = {}
 pending_greetings = []
@@ -62,9 +68,10 @@ def init_db():
             if conn:
                 cur = conn.cursor()
                 cur.execute("""
-                    CREATE TABLE IF NOT EXISTS school_info (
-                        id INT PRIMARY KEY,
-                        content TEXT
+                    CREATE TABLE IF NOT EXISTS school_categories (
+                        cat_key VARCHAR(50) PRIMARY KEY,
+                        content TEXT,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     );
                 """)
                 conn.commit()
@@ -128,54 +135,59 @@ def sync_schedule_data():
     return SCHEDULE_DF
 
 
-def get_school_general_info():
-    global SCHOOL_DATA_CACHE
+def get_all_categories_data():
+    global CATEGORIES_CACHE
 
-    # 1. Neon SQL баазаас хамгийн түрүүнд унших
+    # 1. Neon SQL баазаас унших
     if DATABASE_URL:
         try:
             conn = get_db_connection()
             if conn:
                 cur = conn.cursor()
-                cur.execute("SELECT content FROM school_info WHERE id = 1;")
-                row = cur.fetchone()
+                cur.execute("SELECT cat_key, content FROM school_categories;")
+                rows = cur.fetchall()
                 cur.close()
                 conn.close()
-                if row and row[0]:
-                    SCHOOL_DATA_CACHE = row[0]
-                    return row[0]
+                if rows:
+                    for k, v in rows:
+                        if k in CATEGORIES_CACHE:
+                            CATEGORIES_CACHE[k] = v or ""
+                    return CATEGORIES_CACHE
         except Exception as e:
             print(f"❌ DB Уншихад алдаа: {e}")
 
-    # 2. RAM санах ойд бэлэн байгаа кэшийг шалгах
-    if SCHOOL_DATA_CACHE is not None:
-        return SCHOOL_DATA_CACHE
-
-    # 3. Render-ийн Environment Variable (SCHOOL_GENERAL_INFO)-аас унших
-    env_info = os.environ.get("SCHOOL_GENERAL_INFO", "").strip()
-    if env_info:
-        SCHOOL_DATA_CACHE = env_info
-        return env_info
-
-    # 4. Файлаас унших (Fallback)
+    # 2. Файлаас унших (Fallback)
     if os.path.exists(DATA_FILE):
         try:
             with open(DATA_FILE, "r", encoding="utf-8") as f:
                 content = f.read().strip()
-                if content:
-                    SCHOOL_DATA_CACHE = content
-                    return content
+                if content and not any(CATEGORIES_CACHE.values()):
+                    CATEGORIES_CACHE["general"] = content
         except Exception as e:
             print(f"❌ Файл уншихад алдаа: {e}")
 
-    return "Сургуулийн ерөнхий мэдээлэл хараахан оруулаагүй байна."
+    return CATEGORIES_CACHE
 
 
 def build_smart_context(user_question, current_day, current_time):
     df = sync_schedule_data()
-    general_info = get_school_general_info()
+    cats = get_all_categories_data()
 
-    context_text = f"--- СУРГУУЛИЙН ЕРӨНХИЙ МЭДЭЭЛЭЛ БОЛОН ЖУРАМ ---\n{general_info}\n\n"
+    context_text = "--- СУРГУУЛИЙН АНГИЛСАН МЭДЭЭЛЛҮҮД ---\n"
+    
+    titles = {
+        "general": "1. Сургуулийн ерөнхий мэдээлэл болон журам",
+        "teachers": "2. Багш ажилчдын мэдээлэл",
+        "classrooms": "3. Анги танхимын байршил, мэдээлэл",
+        "advice": "4. Зөвлөгөө зөвлөмж",
+        "other": "5. Бусад мэдээлэл"
+    }
+
+    for key, title in titles.items():
+        val = cats.get(key, "").strip()
+        if val:
+            context_text += f"[{title}]:\n{val}\n\n"
+
     context_text += f"--- ЦАГ ХУГАЦААНЫ МЭДЭЭЛЭЛ ---\nӨнөөдөр: {current_day} гараг | Одоогийн цаг: {current_time}\n\n"
 
     if df is not None and not df.empty:
@@ -220,8 +232,8 @@ def generate_ai_response(user_question, context_text, current_day, current_time)
 
 СТРИКТ ДҮРЭМ:
 1. Хэрэв хэрэглэгч санал, хүсэлт, гомдол хэлж байгаа бол: "Таны санал хүсэлтийг хүлээн авч сургуулийн захиргаанд хадгаллаа. Баярлалаа!" гэж хариул.
-2. Багшийн байршил, хичээлийн хуваарь асуувал "ХИЧЭЭЛИЙН ХУВААРИЙН МЭДЭЭЛЭЛ" хэсгээс харна.
-3. Сургуулийн журам, төлбөр, захиргаа, бусад асуултад "СУРГУУЛИЙН ЕРӨНХИЙ МЭДЭЭЛЭЛ" хэсгээс хариулна.
+2. Багшийн байршил, хичээлийн хуваарь асуувал "ХИЧЭЭЛИЙН ХУВААРИЙН МЭДЭЭЛЭЛ" эсвэл "Багш ажилчдын мэдээлэл" хэсгээс харна.
+3. Анги танхимын мэдээлэл, сургуулийн журам, зөвлөгөө, бусад асуултад тохирох ангиллын мэдээллээс хариулна.
 4. Хэрэв сайн уу, баяртай гэх мэт энгийн мэндчилгээ байвал найрсгаар товч хариулна.
 5. Хариултыг дуу болон текстээр уншихад тохиромжтой, ЦЭВЭР 1-2 ӨГҮҮЛБЭРТ багтаан монгол хэлээр хариул.
 6. Код, тусгай тэмдэгт, өөрийн бодолт хэвлэж болохгүй.
@@ -295,41 +307,48 @@ def index():
 
 @app.route("/api/school-data", methods=["GET", "POST"])
 def manage_school_data():
-    global SCHOOL_DATA_CACHE
+    global CATEGORIES_CACHE
     if request.method == "POST":
-        data = request.json.get("data", "")
-        SCHOOL_DATA_CACHE = data
+        payload = request.json or {}
+        categories_data = payload.get("categories", {})
         
+        # CATEGORIES_CACHE шинэчлэх
+        for k in CATEGORIES_CACHE.keys():
+            if k in categories_data:
+                CATEGORIES_CACHE[k] = categories_data[k]
+
         # 1. Neon PostgreSQL баазад хадгалах
         if DATABASE_URL:
             try:
                 conn = get_db_connection()
                 if conn:
                     cur = conn.cursor()
-                    cur.execute("""
-                        INSERT INTO school_info (id, content)
-                        VALUES (1, %s)
-                        ON CONFLICT (id) 
-                        DO UPDATE SET content = EXCLUDED.content;
-                    """, (data,))
+                    for k, v in CATEGORIES_CACHE.items():
+                        cur.execute("""
+                            INSERT INTO school_categories (cat_key, content, updated_at)
+                            VALUES (%s, %s, CURRENT_TIMESTAMP)
+                            ON CONFLICT (cat_key) 
+                            DO UPDATE SET content = EXCLUDED.content, updated_at = CURRENT_TIMESTAMP;
+                        """, (k, v))
                     conn.commit()
                     cur.close()
                     conn.close()
-                    print("✅ Neon SQL баазад амжилттай хадгалагдлаа.")
+                    print("✅ Neon SQL баазад бүх ангиллын мэдээлэл хадгалагдлаа.")
             except Exception as e:
                 print(f"❌ DB Бичихэд алдаа: {e}")
 
-        # 2. Локал файлд нөөц болгож хадгалах
+        # 2. Нөөц файлд хадгалах
         try:
+            full_txt = "\n\n".join([f"=== {k.upper()} ===\n{v}" for k, v in CATEGORIES_CACHE.items() if v])
             with open(DATA_FILE, "w", encoding="utf-8") as f:
-                f.write(data)
+                f.write(full_txt)
         except Exception as e:
             print(f"❌ Файл бичихэд алдаа: {e}")
             
-        return jsonify({"status": "success", "message": "Мэдээлэл баазад амжилттай хадгалагдлаа!"})
+        return jsonify({"status": "success", "message": "Бүх ангиллын мэдээлэл баазад амжилттай хадгалагдлаа!"})
 
-    context = get_school_general_info()
-    return jsonify({"data": context})
+    cats = get_all_categories_data()
+    return jsonify({"categories": cats})
 
 
 @app.route("/api/process-voice", methods=["POST"])
