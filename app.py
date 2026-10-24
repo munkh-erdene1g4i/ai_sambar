@@ -256,7 +256,7 @@ def generate_ai_response(user_question, context_text, current_day, current_time)
     for model_name in candidate_models:
         payload = {
             "model": model_name,
-            "max_tokens": 500,  # 🛠️ 402 алдааг зассан хязгаарлалт
+            "max_tokens": 500,
             "messages": [
                 {"role": "system", "content": system_instruction},
                 {"role": "user", "content": user_question},
