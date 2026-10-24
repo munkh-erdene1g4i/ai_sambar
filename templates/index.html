@@ -15,7 +15,7 @@
         }
 
         body {
-            background: linear-gradient(135deg, #07131e, #0c1b2b, #11263a);
+            background: linear-gradient(135deg, #050b14, #0a1726, #0f2338);
             color: #fff;
             min-height: 100vh;
             display: flex;
@@ -57,28 +57,35 @@
             width: 48px;
             height: 48px;
             object-fit: contain;
-            filter: drop-shadow(0 0 8px rgba(0, 210, 255, 0.5));
+            filter: drop-shadow(0 0 10px rgba(0, 242, 254, 0.6));
         }
 
         h1 {
             font-size: 1.8rem;
             font-weight: 600;
+            letter-spacing: 0.5px;
+            background: linear-gradient(90deg, #ffffff, #00f2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .admin-btn {
             position: absolute;
             right: 0;
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(0, 242, 254, 0.3);
             color: #fff;
-            padding: 8px 16px;
+            padding: 8px 18px;
             border-radius: 20px;
             cursor: pointer;
             transition: all 0.3s;
+            backdrop-filter: blur(5px);
         }
 
         .admin-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
+            background: rgba(0, 242, 254, 0.2);
+            border-color: #00f2fe;
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
         }
 
         main {
@@ -93,33 +100,247 @@
             z-index: 10;
         }
 
+        /* =========================================================
+           🚀 ULTRA-FUTURISTIC HIGH-TECH AI AVATAR
+           ========================================================= */
         .orb-container {
-            width: 260px;
-            height: 260px;
-            margin: 15px auto;
+            width: 300px;
+            height: 300px;
+            margin: 10px auto;
             position: relative;
             display: flex;
             justify-content: center;
             align-items: center;
-            border-radius: 50%;
-            transition: all 0.3s ease;
             cursor: pointer;
             touch-action: none;
             -webkit-tap-highlight-color: transparent;
             z-index: 20;
         }
 
-        .orb {
-            width: 100%;
-            height: 100%;
+        /* HUD ЭРГЭДЭГ ХҮРЭЭНҮҮД */
+        .hud-ring {
+            position: absolute;
             border-radius: 50%;
-            background: radial-gradient(circle, #00d2ff 0%, #3a7bd5 100%);
-            box-shadow: 0 0 35px rgba(0, 210, 255, 0.5);
-            transition: all 0.5s ease;
-            animation: idleAnimation 3.5s infinite ease-in-out;
             pointer-events: none;
+            transition: all 0.5s ease;
         }
 
+        .hud-ring.outer-ring {
+            width: 290px;
+            height: 290px;
+            border: 2px dashed rgba(0, 242, 254, 0.35);
+            animation: rotateClockwise 18s linear infinite;
+        }
+
+        .hud-ring.inner-ring {
+            width: 260px;
+            height: 260px;
+            border: 1px solid rgba(127, 0, 255, 0.3);
+            border-top: 3px solid rgba(0, 242, 254, 0.8);
+            border-bottom: 3px solid rgba(0, 242, 254, 0.8);
+            animation: rotateCounterClockwise 12s linear infinite;
+        }
+
+        @keyframes rotateClockwise {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes rotateCounterClockwise {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(-360deg); }
+        }
+
+        /* АИ ТОЛГОЙ БОЛОН ШИЛЭН ХАВТАН */
+        .ai-head {
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(15, 35, 60, 0.85), rgba(5, 12, 22, 0.95));
+            border: 2px solid rgba(0, 242, 254, 0.6);
+            box-shadow: 0 0 30px rgba(0, 242, 254, 0.3), inset 0 0 20px rgba(0, 242, 254, 0.2);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 22px;
+            backdrop-filter: blur(12px);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: floatHead 4s infinite ease-in-out;
+        }
+
+        @keyframes floatHead {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* ЧИХ / МЭДРЭГЧ НОДУУД */
+        .side-node {
+            position: absolute;
+            top: 50%;
+            width: 14px;
+            height: 48px;
+            background: linear-gradient(180deg, #00f2fe, #7f00ff);
+            border-radius: 8px;
+            transform: translateY(-50%);
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.5);
+            transition: all 0.4s ease;
+        }
+
+        .side-node.node-left { left: -18px; border-radius: 10px 2px 2px 10px; }
+        .side-node.node-right { right: -18px; border-radius: 2px 10px 10px 2px; }
+
+        .pulse-ring {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 100%; height: 100%;
+            border-radius: 8px;
+            border: 1px solid #00f2fe;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+        }
+
+        /* 👁️ КВАНТА НЕОН НҮДНҮҮД */
+        .eyes-container {
+            display: flex;
+            gap: 36px;
+            align-items: center;
+            z-index: 2;
+        }
+
+        .eye {
+            width: 44px;
+            height: 44px;
+            background: radial-gradient(circle, #ffffff 10%, #00f2fe 45%, rgba(0, 82, 212, 0.8) 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 20px #00f2fe, 0 0 35px rgba(0, 242, 254, 0.5);
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: blinkEye 4.5s infinite ease-in-out;
+            transition: all 0.3s ease;
+        }
+
+        .eye .pupil {
+            width: 14px;
+            height: 14px;
+            background: #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #ffffff;
+            transition: transform 0.2s ease;
+        }
+
+        @keyframes blinkEye {
+            0%, 94%, 100% { transform: scaleY(1); }
+            97% { transform: scaleY(0.06); }
+        }
+
+        /* 👄 ВИЗУАЛАЙЗЕР АМ (SPECTRUM WAVES) */
+        .mouth-visualizer {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            height: 30px;
+            width: 110px;
+            z-index: 2;
+        }
+
+        .v-bar {
+            width: 4px;
+            height: 6px;
+            background: linear-gradient(180deg, #00f2fe, #3a7bd5);
+            border-radius: 3px;
+            box-shadow: 0 0 8px #00f2fe;
+            transition: height 0.15s ease, background 0.3s ease;
+        }
+
+        /* 🔴 СОНСОЖ БАЙХ ТӨЛӨВ (.recording) */
+        .orb-container.recording .ai-head {
+            border-color: #ff2a5f;
+            box-shadow: 0 0 50px rgba(255, 42, 95, 0.6), inset 0 0 25px rgba(255, 42, 95, 0.3);
+        }
+
+        .orb-container.recording .outer-ring {
+            border-color: rgba(255, 42, 95, 0.6);
+            animation-duration: 6s;
+        }
+
+        .orb-container.recording .inner-ring {
+            border-top-color: #ff2a5f;
+            border-bottom-color: #ff2a5f;
+            animation-duration: 4s;
+        }
+
+        .orb-container.recording .side-node {
+            background: linear-gradient(180deg, #ff2a5f, #ff758c);
+            height: 65px;
+            box-shadow: 0 0 25px #ff2a5f;
+        }
+
+        .orb-container.recording .pulse-ring {
+            animation: nodePulse 1.2s infinite ease-out;
+        }
+
+        @keyframes nodePulse {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+        }
+
+        .orb-container.recording .eye {
+            background: radial-gradient(circle, #ffffff 10%, #ff2a5f 50%, #b3002d 100%);
+            box-shadow: 0 0 25px #ff2a5f;
+            transform: scale(1.08);
+        }
+
+        .orb-container.recording .v-bar {
+            background: linear-gradient(180deg, #ff2a5f, #ff758c);
+            box-shadow: 0 0 8px #ff2a5f;
+        }
+
+        /* 🔊 ЯРЬЖ БАЙХ ТӨЛӨВ (.speaking - EQUALIZER ANIMATION) */
+        .orb-container.speaking .ai-head {
+            border-color: #00f2fe;
+            box-shadow: 0 0 65px rgba(0, 242, 254, 0.8);
+            transform: scale(1.04);
+        }
+
+        .orb-container.speaking .eye {
+            transform: scale(1.12);
+            box-shadow: 0 0 30px #00f2fe, 0 0 50px rgba(0, 242, 254, 0.8);
+        }
+
+        .orb-container.speaking .v-bar {
+            background: linear-gradient(180deg, #ffffff, #00f2fe);
+            animation: waveActive 0.35s infinite alternate ease-in-out;
+        }
+
+        .orb-container.speaking .v-bar:nth-child(1) { animation-delay: 0.05s; }
+        .orb-container.speaking .v-bar:nth-child(2) { animation-delay: 0.15s; }
+        .orb-container.speaking .v-bar:nth-child(3) { animation-delay: 0.25s; }
+        .orb-container.speaking .v-bar:nth-child(4) { animation-delay: 0.35s; }
+        .orb-container.speaking .v-bar:nth-child(5) { animation-delay: 0.25s; }
+        .orb-container.speaking .v-bar:nth-child(6) { animation-delay: 0.15s; }
+        .orb-container.speaking .v-bar:nth-child(7) { animation-delay: 0.05s; }
+
+        @keyframes waveActive {
+            0% { height: 4px; }
+            100% { height: 28px; }
+        }
+
+        /* ⚠️ ОФФЛАЙН ТӨЛӨВ (.offline) */
+        .orb-container.offline .ai-head {
+            border-color: #f59e0b;
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.5);
+        }
+        .orb-container.offline .eye {
+            background: radial-gradient(circle, #ffffff 10%, #f59e0b 50%, #b45309 100%);
+            box-shadow: 0 0 20px #f59e0b;
+        }
+
+        /* ➡️ ЗАМ ЧИГЛЭЛ БАРААМЖААЛАХ СУМ */
         .arrow-overlay {
             position: absolute;
             font-size: 6.5rem;
@@ -132,47 +353,9 @@
             z-index: 25;
         }
 
-        @keyframes idleAnimation {
-            0% { transform: translateY(0px) scale(1); box-shadow: 0 0 30px rgba(0, 210, 255, 0.4); }
-            50% { transform: translateY(-12px) scale(1.04); box-shadow: 0 0 60px rgba(0, 210, 255, 0.8); }
-            100% { transform: translateY(0px) scale(1); box-shadow: 0 0 30px rgba(0, 210, 255, 0.4); }
-        }
-
-        .orb-container.recording .orb {
-            background: radial-gradient(circle, #ff416c 0%, #ff4b2b 100%);
-            box-shadow: 0 0 60px rgba(255, 65, 108, 0.8);
-            animation: recordPulse 1.2s infinite alternate ease-in-out;
-        }
-
-        @keyframes recordPulse {
-            0% { transform: scale(0.95); }
-            100% { transform: scale(1.08); }
-        }
-
-        .orb-container.speaking .orb {
-            background: radial-gradient(circle, #00f2fe 0%, #4facfe 100%);
-            animation: speakVisual 0.7s infinite alternate ease-in-out;
-        }
-
-        @keyframes speakVisual {
-            0% { transform: scale(1); box-shadow: 0 0 30px #00f2fe, 0 0 60px #4facfe; filter: hue-rotate(0deg); }
-            100% { transform: scale(1.18); box-shadow: 0 0 80px #00f2fe, 0 0 130px #00c6ff; filter: hue-rotate(40deg); }
-        }
-
-        .orb-container.offline .orb {
-            background: radial-gradient(circle, #facc15 0%, #eab308 100%);
-            box-shadow: 0 0 50px rgba(234, 179, 8, 0.8);
-            animation: offlinePulse 2s infinite ease-in-out;
-        }
-
-        @keyframes offlinePulse {
-            0% { transform: scale(1); box-shadow: 0 0 30px rgba(234, 179, 8, 0.5); }
-            50% { transform: scale(1.04); box-shadow: 0 0 60px rgba(234, 179, 8, 0.9); }
-            100% { transform: scale(1); box-shadow: 0 0 30px rgba(234, 179, 8, 0.5); }
-        }
-
-        .orb-container.show-arrow .orb {
-            opacity: 0.25;
+        .orb-container.show-arrow .ai-head,
+        .orb-container.show-arrow .hud-ring {
+            opacity: 0.2;
             transform: scale(0.85);
         }
 
@@ -211,37 +394,39 @@
         }
 
         .status-text {
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             margin-top: 15px;
             text-align: center;
-            color: #e0e0e0;
+            color: #cbd5e1;
             min-height: 35px;
             font-weight: 500;
         }
 
         .key-badge {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 4px 10px;
+            background: rgba(0, 242, 254, 0.15);
+            padding: 4px 12px;
             border-radius: 6px;
             font-weight: bold;
-            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: #00f2fe;
+            border: 1px solid rgba(0, 242, 254, 0.4);
         }
 
         .chat-box {
             margin-top: 15px;
             width: 100%;
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(10, 22, 38, 0.6);
             border-radius: 16px;
             padding: 20px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 242, 254, 0.2);
             display: none;
             transition: opacity 0.5s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
         }
 
         .question {
             font-size: 1.1rem;
-            color: #4facfe;
+            color: #38bdf8;
             margin-bottom: 10px;
         }
 
@@ -254,11 +439,11 @@
         footer {
             width: 100%;
             max-width: 900px;
-            background: rgba(0, 0, 0, 0.35);
+            background: rgba(10, 22, 38, 0.6);
             border-radius: 16px;
             padding: 14px 22px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -300,10 +485,10 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            background: rgba(12, 27, 43, 0.85);
+            background: rgba(10, 22, 38, 0.85);
             padding: 8px 14px;
             border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(0, 242, 254, 0.25);
             font-size: 0.85rem;
             color: #e2e8f0;
             backdrop-filter: blur(8px);
@@ -361,7 +546,7 @@
         }
 
         .reminder-box {
-            background: rgba(56, 189, 248, 0.12);
+            background: rgba(56, 189, 248, 0.08);
             border-left: 4px solid #38bdf8;
             padding: 10px 14px;
             border-radius: 6px;
@@ -417,26 +602,29 @@
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.85);
             justify-content: center;
             align-items: center;
             z-index: 100;
+            backdrop-filter: blur(8px);
         }
 
         .modal-content {
-            background: #1e293b;
+            background: #0f172a;
             padding: 30px;
             border-radius: 16px;
             width: 90%;
             max-width: 600px;
+            border: 1px solid rgba(0, 242, 254, 0.3);
+            box-shadow: 0 0 40px rgba(0, 242, 254, 0.2);
         }
 
         textarea {
             width: 100%;
             height: 200px;
-            background: #0f172a;
+            background: #070d19;
             color: #fff;
-            border: 1px solid #334155;
+            border: 1px solid #1e293b;
             border-radius: 8px;
             padding: 12px;
             margin: 15px 0;
@@ -450,14 +638,15 @@
         }
 
         .btn {
-            padding: 8px 16px;
+            padding: 8px 18px;
             border-radius: 8px;
             border: none;
             cursor: pointer;
+            font-weight: 600;
         }
 
-        .btn-primary { background: #3b82f6; color: white; }
-        .btn-secondary { background: #64748b; color: white; }
+        .btn-primary { background: #0284c7; color: white; }
+        .btn-secondary { background: #475569; color: white; }
     </style>
 </head>
 <body>
@@ -473,8 +662,27 @@
     </header>
 
     <main>
+        <!-- 🚀 HIGH-TECH SCI-FI AI AVATAR -->
         <div class="orb-container" id="orbContainer">
-            <div class="orb"></div>
+            <div class="hud-ring outer-ring"></div>
+            <div class="hud-ring inner-ring"></div>
+            <div class="ai-head">
+                <div class="side-node node-left"><div class="pulse-ring"></div></div>
+                <div class="side-node node-right"><div class="pulse-ring"></div></div>
+                <div class="eyes-container">
+                    <div class="eye"><div class="pupil"></div></div>
+                    <div class="eye"><div class="pupil"></div></div>
+                </div>
+                <div class="mouth-visualizer">
+                    <div class="v-bar"></div>
+                    <div class="v-bar"></div>
+                    <div class="v-bar"></div>
+                    <div class="v-bar"></div>
+                    <div class="v-bar"></div>
+                    <div class="v-bar"></div>
+                    <div class="v-bar"></div>
+                </div>
+            </div>
             <div class="arrow-overlay" id="arrowOverlay">➔</div>
         </div>
 
