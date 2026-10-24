@@ -8,6 +8,7 @@ import uuid
 import edge_tts
 import pandas as pd
 import requests
+import psycopg2
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request, send_file
 
@@ -18,6 +19,7 @@ app = Flask(__name__)
 # ---------------------------------------------------------
 # 1. ТОХИРГОО БОЛОН API ТҮЛХҮҮРҮҮД
 # ---------------------------------------------------------
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
 CHIMEGE_TOKEN = os.environ.get("CHIMEGE_TOKEN", "")
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
 GOOGLE_DOC_WEBHOOK_URL = os.environ.get("GOOGLE_DOC_WEBHOOK_URL", "")
@@ -27,19 +29,53 @@ DATA_FILE = "school_data.txt"
 
 SCHEDULE_DF = None
 LAST_FETCH_TIME = None
-
-# Сургуулийн мэдээллийг RAM санах ойд бэлэн байлгах глобал кэш
 SCHOOL_DATA_CACHE = None
 
 teacher_cooldowns = {}
 pending_greetings = []
 COOLDOWN_SECONDS = 60
-
 last_ble_ping = 0
 
 
 # ---------------------------------------------------------
-# 2. МЭДЭЭЛЭЛ БОЛОН САНАЛ ХҮСЭЛТИЙН ФУНКЦҮҮД
+# 2. NEON POSTGRESQL БААЗЫН ХОЛБООС БОЛОН ИНИЦИАЛИЗАЦИ
+# ---------------------------------------------------------
+def get_db_connection():
+    if not DATABASE_URL:
+        return None
+    try:
+        if "sslmode" not in DATABASE_URL:
+            return psycopg2.connect(DATABASE_URL, sslmode="require")
+        return psycopg2.connect(DATABASE_URL)
+    except Exception as e:
+        print(f"❌ DB Холболтын алдаа: {e}")
+        return None
+
+
+def init_db():
+    if DATABASE_URL:
+        try:
+            conn = get_db_connection()
+            if conn:
+                cur = conn.cursor()
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS school_info (
+                        id INT PRIMARY KEY,
+                        content TEXT
+                    );
+                """)
+                conn.commit()
+                cur.close()
+                conn.close()
+                print("✅ Neon PostgreSQL бааз амжилттай инициализаци хийгдлээ.")
+        except Exception as e:
+            print(f"❌ DB Инициализацийн алдаа: {e}")
+
+init_db()
+
+
+# ---------------------------------------------------------
+# 3. МЭДЭЭЛЭЛ БОЛОН САНАЛ ХҮСЭЛТИЙН ФУНКЦҮҮД
 # ---------------------------------------------------------
 def send_to_google_doc(feedback_text):
     if not GOOGLE_DOC_WEBHOOK_URL:
@@ -91,17 +127,34 @@ def sync_schedule_data():
 
 def get_school_general_info():
     global SCHOOL_DATA_CACHE
-    # 1. Вэб дээрээс засаж хадгалсан бол RAM-д байгаа кэшийг эхэнд нь уншина
+    
+    # 1. Neon SQL баазаас унших
+    if DATABASE_URL:
+        try:
+            conn = get_db_connection()
+            if conn:
+                cur = conn.cursor()
+                cur.execute("SELECT content FROM school_info WHERE id = 1;")
+                row = cur.fetchone()
+                cur.close()
+                conn.close()
+                if row and row[0]:
+                    SCHOOL_DATA_CACHE = row[0]
+                    return row[0]
+        except Exception as e:
+            print(f"❌ DB Уншихад алдаа: {e}")
+
+    # 2. RAM санах ойд бэлэн байгаа кэшийг шалгах
     if SCHOOL_DATA_CACHE is not None:
         return SCHOOL_DATA_CACHE
 
-    # 2. Render-ийн Environment Variable (SCHOOL_GENERAL_INFO)-аас уншина
+    # 3. Render-ийн Environment Variable (SCHOOL_GENERAL_INFO)-аас унших
     env_info = os.environ.get("SCHOOL_GENERAL_INFO", "").strip()
     if env_info:
         SCHOOL_DATA_CACHE = env_info
         return env_info
 
-    # 3. Хэрэв орчны хувьсагч байхгүй бол файлаас уншина
+    # 4. Хэрэв бааз болон орчны хувьсагч байхгүй бол локал файлаас унших
     if os.path.exists(DATA_FILE):
         try:
             with open(DATA_FILE, "r", encoding="utf-8") as f:
@@ -151,11 +204,11 @@ def build_smart_context(user_question, current_day, current_time):
 
 
 # ---------------------------------------------------------
-# 3. OPENROUTER AI ХЭСЭГ
+# 4. OPENROUTER AI ХЭСЭГ
 # ---------------------------------------------------------
 def generate_ai_response(user_question, context_text, current_day, current_time):
     if not OPENROUTER_API_KEY:
-        return "Алдаа: OPENROUTER_API_KEY олдсонгүй. .env файлаа шалгана уу."
+        return "Алдаа: OPENROUTER_API_KEY олдсонгүй. Render Environment Variable-аа шалгана уу."
 
     system_instruction = f"""Чи бол сургуулийн мэдээллийн ухаалаг туслах AI.
 
@@ -211,7 +264,7 @@ def generate_ai_response(user_question, context_text, current_day, current_time)
 
 
 # ---------------------------------------------------------
-# 4. FLASK ROUTE БОЛОН АУДИО МЭДЭЭЛЭЛ
+# 5. FLASK ROUTE БОЛОН АУДИО МЭДЭЭЛЭЛ
 # ---------------------------------------------------------
 async def text_to_speech_edge(text, output_file):
     communicate = edge_tts.Communicate(text, "mn-MN-YesuiNeural")
@@ -242,14 +295,35 @@ def manage_school_data():
     global SCHOOL_DATA_CACHE
     if request.method == "POST":
         data = request.json.get("data", "")
-        SCHOOL_DATA_CACHE = data  # RAM санах ойд шууд хадгална
+        SCHOOL_DATA_CACHE = data
+        
+        # 1. Neon PostgreSQL баазад хадгалах
+        if DATABASE_URL:
+            try:
+                conn = get_db_connection()
+                if conn:
+                    cur = conn.cursor()
+                    cur.execute("""
+                        INSERT INTO school_info (id, content)
+                        VALUES (1, %s)
+                        ON CONFLICT (id) 
+                        DO UPDATE SET content = EXCLUDED.content;
+                    """, (data,))
+                    conn.commit()
+                    cur.close()
+                    conn.close()
+                    print("✅ Neon SQL баазад амжилттай хадгалагдлаа.")
+            except Exception as e:
+                print(f"❌ DB Бичихэд алдаа: {e}")
+
+        # 2. Локал файлд нөөц болгож хадгалах
         try:
             with open(DATA_FILE, "w", encoding="utf-8") as f:
                 f.write(data)
         except Exception as e:
             print(f"❌ Файл бичихэд алдаа: {e}")
             
-        return jsonify({"status": "success", "message": "Мэдээлэл хадгалагдлаа!"})
+        return jsonify({"status": "success", "message": "Сургуулийн мэдээлэл баазад амжилттай хадгалагдлаа!"})
 
     context = get_school_general_info()
     return jsonify({"data": context})
@@ -337,7 +411,7 @@ def get_audio():
 
 
 # ---------------------------------------------------------
-# 5. ESP32 BEACON & BLE ROUTES
+# 6. ESP32 BEACON & BLE ROUTES
 # ---------------------------------------------------------
 @app.route("/api/beacon-presence", methods=["POST"])
 def handle_beacon():
